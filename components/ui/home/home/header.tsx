@@ -1,5 +1,6 @@
 import assets from "@/assets";
 import { Feather, MaterialIcons } from "@expo/vector-icons"
+import { router } from "expo-router";
 import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native"
 
 const HomeHeader = () => {
@@ -10,7 +11,7 @@ const HomeHeader = () => {
                 <Text style={styles.locationText}>S5.03, Vinhomes GrandParl</Text>
                 <MaterialIcons name="keyboard-arrow-down" size={20} color="#333" />
             </View>
-            <TouchableOpacity style={styles.cartButton}>
+            <TouchableOpacity style={styles.cartButton} onPress={() => router.push('/(cart)')}>
                 <Image source={assets.icon.cart} style={{ width: 24, height: 24 }} />
             </TouchableOpacity>
         </View >

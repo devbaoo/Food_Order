@@ -11,6 +11,23 @@ import user from '@/assets/images/icons/user.png';
 import user_active from '@/assets/images/icons/user-active.png';
 import menu from '@/assets/images/icons/menu.png';
 import menu_active from '@/assets/images/icons/menu-active.png';
+import chevron_left from '@/assets/images/icons/chevron-left.png';
+import chevron_right from '@/assets/images/icons/chevron-right.png';
+import plus from '@/assets/images/icons/plus.png';
+import tag from '@/assets/images/icons/tag.png';
+import trash from '@/assets/images/icons/trash.png';
+import order from '@/assets/images/icons/order.png';
+import phone from '@/assets/images/icons/phone.png';
+import location from '@/assets/images/icons/location.png';
+import counpon from '@/assets/images/icons/counpon.png';
+import priority from '@/assets/images/icons/priority.png';
+import clock from '@/assets/images/icons/clock.png';
+import apple_pay from '@/assets/images/icons/apple-pay.png';
+import cash from '@/assets/images/icons/cash.png';
+import momo from '@/assets/images/icons/momo.png';
+import unchecked from '@/assets/images/icons/unchecked.png';
+import checked from '@/assets/images/icons/checked.png';
+import cart_white from '@/assets/images/icons/cart-white.png';
 
 import fruit from '@/assets/images/items/fruit.png';
 import beverage from '@/assets/images/items/beverage.png';
@@ -40,6 +57,7 @@ import bunbohue from '@/assets/images/food/bunbohue.png';
 import miquang from '@/assets/images/food/miquang.png';
 import banhcanhcua from '@/assets/images/food/banhcanhcua.png';
 import bunrieucua from '@/assets/images/food/bunrieucua.png';
+import pho from '@/assets/images/food/pho.png';
 
 import background1 from '@/assets/images/background/background1.png';
 
@@ -64,7 +82,24 @@ export default {
         cart,
         star,
         dropdown,
-        back
+        back,
+        chevron_left,
+        chevron_right,
+        tag,
+        order,
+        plus,
+        trash,
+        phone,
+        location,
+        counpon,
+        priority,
+        clock,
+        apple_pay,
+        cash,
+        momo,
+        unchecked,
+        checked,
+        cart_white
     },
     item: {
         fruit,
@@ -97,7 +132,8 @@ export default {
         bunbohue,
         miquang,
         banhcanhcua,
-        bunrieucua
+        bunrieucua,
+        pho
     },
 
     background: {

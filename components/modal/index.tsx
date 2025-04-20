@@ -1,15 +1,18 @@
 import screen from "@/utils/screen";
 import { ReactNode, useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, View } from "react-native";
+import { Animated, Easing, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewStyle } from "react-native";
 
 
 interface ModalProps {
     children?: ReactNode;
     visible: boolean;
+    containerStyle?: ViewStyle;
+    wrapperStyle?: ViewStyle;
+    onCancel?: () => void;
 }
 
 const Modal: React.FC<ModalProps> = ({ ...props }) => {
-    const { children, visible } = props;
+    const { children, visible, containerStyle, wrapperStyle, onCancel } = props;
     const slideAnim = useRef(new Animated.Value(screen.height)).current;
 
     useEffect(() => {
@@ -31,19 +34,26 @@ const Modal: React.FC<ModalProps> = ({ ...props }) => {
     }, [visible]);
 
     return (
-        <Animated.View
-            style={[
-                StyleSheet.absoluteFillObject,
-                {
-                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                    top: slideAnim,
-                }
-            ]}
-        >
-            <View style={styles.container}>
-                {children}
-            </View>
-        </Animated.View>
+        <TouchableWithoutFeedback onPress={onCancel}>
+            <Animated.View
+                style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        top: slideAnim,
+                    },
+                    containerStyle
+                ]}
+            >
+                <TouchableWithoutFeedback>
+                    <View
+                        style={[styles.container, wrapperStyle]}
+                    >
+                        {children}
+                    </View>
+                </TouchableWithoutFeedback>
+            </Animated.View>
+        </TouchableWithoutFeedback>
     )
 }
 

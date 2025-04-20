@@ -1,10 +1,15 @@
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import Modal from "@/components/modal";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useState } from "react";
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, SafeAreaView, ImageBackground } from "react-native";
 
 export default function MenuScreen() {
+    const [show, setShow] = useState<boolean>(false);
+    const [secondShow, setSecondShow] = useState<boolean>(false);
+
     return (
         <View style={{ flex: 1, paddingTop: 32 }}>
             <LinearGradient
@@ -32,7 +37,7 @@ export default function MenuScreen() {
 
                     {/* Time-based meal categories */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                        <MealTimeCard title="Morning" image={assets.food.food1} />
+                        <MealTimeCard title="Morning" image={assets.food.food1} onPress={() => setShow(true)} />
                         <MealTimeCard title="Noon" image={assets.food.food2} />
                         <MealTimeCard title="Evening" image={assets.food.food3} />
                     </View>
@@ -52,12 +57,83 @@ export default function MenuScreen() {
                     </ScrollView>
                 </View>
             </LinearGradient>
+
+            <Modal
+                visible={show}
+                containerStyle={{
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+                wrapperStyle={{ flex: 0 }}
+                onCancel={() => setShow(false)}
+            >
+                <View style={{ padding: 16, backgroundColor: "white", borderRadius: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 15 }}>
+                    <TouchableOpacity style={{ gap: 5 }} onPress={() => {
+                        setSecondShow(true);
+                        setShow(false);
+                    }}>
+                        <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                        <Text>Dish1</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ gap: 5 }}>
+                        <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                        <Text>Dish2</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ gap: 5 }}>
+                        <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                        <Text>Dish2</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+            <Modal
+                visible={secondShow}
+                containerStyle={{ paddingBlock: 20 }}
+                onCancel={() => setSecondShow(false)}
+            >
+                <LinearGradient
+                    colors={['#00696C', '#00CBD2']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={{
+                        flex: 1,
+                    }}
+                >
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 15, paddingTop: 20 }}>
+                        <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }} onPress={() => setSecondShow(false)}>
+                            <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                            <Text>Dish1</Text>
+                            <Icon icon={assets.icon.dropdown} size={16} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}>
+                            <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                            <Text>Dish2</Text>
+                            <Icon icon={assets.icon.dropdown} size={16} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}>
+                            <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                            <Text>Dish2</Text>
+                            <Icon icon={assets.icon.dropdown} size={16} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView
+                        style={{ flex: 1 }}
+                    >
+
+                    </ScrollView>
+
+                    <TouchableOpacity style={{ paddingBlock: 30, width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
+                        <Icon icon={assets.icon.chevron_left} size={16} />
+                    </TouchableOpacity>
+                </LinearGradient>
+            </Modal>
         </View>
     )
 }
 
-const MealTimeCard = ({ title, image }: { title: string, image: any }) => (
-    <TouchableOpacity style={styles.mealTimeCard}>
+const MealTimeCard = ({ title, image, onPress }: { title: string, image: any, onPress?: () => void }) => (
+    <TouchableOpacity style={styles.mealTimeCard} onPress={onPress}>
         <Image source={image} style={styles.mealTimeImage} />
         <Text style={styles.mealTimeTitle}>{title}</Text>
         <View style={styles.chevronContainer}>
