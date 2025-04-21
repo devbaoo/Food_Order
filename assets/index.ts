@@ -28,6 +28,7 @@ import momo from '@/assets/images/icons/momo.png';
 import unchecked from '@/assets/images/icons/unchecked.png';
 import checked from '@/assets/images/icons/checked.png';
 import cart_white from '@/assets/images/icons/cart-white.png';
+import chevron_left_2 from '@/assets/images/icons/chevron-left-2.png';
 
 import fruit from '@/assets/images/items/fruit.png';
 import beverage from '@/assets/images/items/beverage.png';
@@ -99,7 +100,8 @@ export default {
         momo,
         unchecked,
         checked,
-        cart_white
+        cart_white,
+        chevron_left_2
     },
     item: {
         fruit,

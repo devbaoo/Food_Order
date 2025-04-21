@@ -1,6 +1,7 @@
 import assets from "@/assets";
 import Icon from "@/components/icon";
 import Modal from "@/components/modal";
+import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -88,7 +89,7 @@ export default function MenuScreen() {
 
             <Modal
                 visible={secondShow}
-                containerStyle={{ paddingBlock: 20 }}
+                containerStyle={{ paddingBlock: screen.width * 0.08 }}
                 onCancel={() => setSecondShow(false)}
             >
                 <LinearGradient
@@ -101,34 +102,59 @@ export default function MenuScreen() {
                 >
                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 15, paddingTop: 20 }}>
                         <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }} onPress={() => setSecondShow(false)}>
-                            <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                            <Image source={assets.food.food1} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
                             <Text>Dish1</Text>
                             <Icon icon={assets.icon.dropdown} size={16} />
                         </TouchableOpacity>
                         <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}>
-                            <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                            <Image source={assets.food.food1} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
                             <Text>Dish2</Text>
                             <Icon icon={assets.icon.dropdown} size={16} />
                         </TouchableOpacity>
                         <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}>
-                            <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
+                            <Image source={assets.food.food1} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
                             <Text>Dish2</Text>
                             <Icon icon={assets.icon.dropdown} size={16} />
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView
-                        style={{ flex: 1 }}
-                    >
+                    <View style={{ flex: 1, paddingHorizontal: 20, paddingBlock: 15 }}>
+                        <View style={{ flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', borderRadius: 10, padding: 10 }}>
+                            <ScrollView
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{ gap: 10 }}
+                                showsVerticalScrollIndicator={false}
+                            >
+                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
+                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
+                                    <Text>Pho long dao</Text>
+                                    <Icon icon={assets.icon.star} size={16} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
+                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
+                                    <Text>Pho long dao</Text>
+                                    <Icon icon={assets.icon.star} size={16} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
+                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
+                                    <Text>Pho long dao</Text>
+                                    <Icon icon={assets.icon.star} size={16} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
+                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
+                                    <Text>Pho long dao</Text>
+                                    <Icon icon={assets.icon.star} size={16} />
+                                </TouchableOpacity>
+                            </ScrollView>
+                        </View>
+                    </View>
 
-                    </ScrollView>
-
-                    <TouchableOpacity style={{ paddingBlock: 30, width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
-                        <Icon icon={assets.icon.chevron_left} size={16} />
+                    <TouchableOpacity style={styles.closeButton} onPress={() => setSecondShow(false)}>
+                        <Icon icon={assets.icon.chevron_left_2} width={50} height={20} />
                     </TouchableOpacity>
                 </LinearGradient>
             </Modal>
-        </View>
+        </View >
     )
 }
 
@@ -242,4 +268,11 @@ const styles = StyleSheet.create({
         color: '#E0E0E0',
         fontSize: 18,
     },
+    closeButton: {
+        paddingBlock: screen.width * 0.05,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'white'
+    }
 });
