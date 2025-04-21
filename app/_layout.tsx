@@ -9,6 +9,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import AppNavigator from '@/routes';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native';
+import React from 'react';
+import Toast from 'react-native-toast-message';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -34,6 +36,7 @@ export default function RootLayout() {
       <SafeAreaView style={{ flex: 1 }}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <AppNavigator />
+          <Toast />
           <StatusBar style="dark" />
         </ThemeProvider>
       </SafeAreaView>

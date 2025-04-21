@@ -1,12 +1,17 @@
+import { getAllQuestions } from "@/api/modules/question";
 import assets from "@/assets"
+import { Question } from "@/types";
 import screen from "@/utils/screen"
 import { LinearGradient } from "expo-linear-gradient"
 import { router } from "expo-router";
+import React from "react";
 import { useRef, useState } from "react";
 import { Animated, Image, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native"
 
 export default function GenderScreen() {
     const [selected, setSelected] = useState<'man' | 'woman' | null>(null);
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
     const scaleWoman = useRef(new Animated.Value(1)).current;
     const scaleMan = useRef(new Animated.Value(1)).current;
@@ -15,7 +20,7 @@ export default function GenderScreen() {
     const translateXMan = useRef(new Animated.Value(0)).current;
     const overlayOpacity = useRef(new Animated.Value(0)).current;
 
-    const onSelect = (gender: 'man' | 'woman') => {
+    const onSelect = async (gender: 'man' | 'woman') => {
         setSelected(gender);
 
         const isWoman = gender === 'woman';
@@ -37,9 +42,20 @@ export default function GenderScreen() {
                 useNativeDriver: true,
             }),
         ]).start();
-        
-        setTimeout(() => router.push('/(hint)/selection'), 1500);
+
+        setTimeout(async () => await onLoadQuestions(), 1500);
     };
+
+    const onLoadQuestions = async () => {
+        try {
+            setLoading(true);
+            const questions = await getAllQuestions();
+            setQuestions(questions);
+        }
+        finally {
+            setLoading(false);
+        }
+    }
 
     const reset = () => {
         setSelected(null);

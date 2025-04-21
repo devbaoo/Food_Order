@@ -2,8 +2,9 @@ import assets from "@/assets";
 import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, View, Text, Image, TouchableOpacity } from "react-native"
+import React from "react";
+import { useEffect, useRef } from "react";
+import { Animated, StyleSheet, View, Text, TouchableOpacity } from "react-native"
 
 export default () => {
     const bubbleOpacity = useRef(new Animated.Value(1)).current;
@@ -13,7 +14,7 @@ export default () => {
     const stageOneOpacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Giai đoạn 1: xuất hiện hình 1 sau 500ms
+        // Stage 1: displays image after 500ms
         setTimeout(() => {
             Animated.timing(stageOneOpacity, {
                 toValue: 1,
@@ -22,7 +23,7 @@ export default () => {
             }).start();
         }, 500);
 
-        // Giai đoạn 2: sau khi hình 1 hiện xong thì animate tiếp
+        // Stage 2: after the first image displayed then continue animation
         setTimeout(() => {
             Animated.sequence([
                 Animated.timing(bubbleOpacity, {
@@ -48,7 +49,7 @@ export default () => {
                     useNativeDriver: true,
                 }),
             ]).start();
-        }, 500 + 600 + 300); // đợi hết fade in hình 1 rồi mới chạy hình 2
+        }, 500 + 600 + 300); // wait for fade finished showing the first image then runs second image
     }, []);
 
     return (
@@ -74,7 +75,7 @@ export default () => {
 
                     {/* Logo */}
                     <Animated.Image
-                        source={assets.logo} // thay bằng ảnh của bạn
+                        source={assets.logo}
                         style={[styles.logo, {
                             transform: [
                                 { translateY: logoTranslateY },
@@ -86,7 +87,10 @@ export default () => {
 
                     {/* Button */}
                     <Animated.View style={[styles.buttonWrapper, { opacity: buttonOpacity }]}>
-                        <TouchableOpacity style={styles.button} onPress={() => router.push('/(hint)/gender')}>
+                        <TouchableOpacity
+                            style={styles.button}
+                            onPress={() => router.push('/(hint)/gender')}
+                        >
                             <Text style={styles.buttonText}>START</Text>
                         </TouchableOpacity>
                     </Animated.View>
@@ -133,7 +137,11 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
         width: '70%',
         borderRadius: 100,
-        alignSelf: 'center'
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8
     },
     buttonText: {
         color: '#fff',

@@ -3,6 +3,7 @@ import BackgroundLoading from "@/components/loading/background";
 import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Image, StyleSheet, TouchableOpacity, View, Text } from "react-native";
 

@@ -4,6 +4,7 @@ import Modal from "@/components/modal";
 import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import React from "react";
 import { useState } from "react";
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, SafeAreaView, ImageBackground } from "react-native";
 
@@ -125,7 +126,7 @@ export default function MenuScreen() {
                                 contentContainerStyle={{ gap: 10 }}
                                 showsVerticalScrollIndicator={false}
                             >
-                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
+                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }} onPress={() => router.push('/(menu)')}>
                                     <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
                                     <Text>Pho long dao</Text>
                                     <Icon icon={assets.icon.star} size={16} />
