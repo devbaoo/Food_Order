@@ -1,16 +1,55 @@
+import { getAllMealTimes } from "@/api/modules/mealTime";
+import { getAllRestaurants } from "@/api/modules/restaurant";
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import BackgroundLoading from "@/components/loading/background";
 import Modal from "@/components/modal";
+import MenuCategory from "@/components/ui/home/menu/category";
+import MenuStore from "@/components/ui/home/menu/store";
+import { MealTime, Restaurant } from "@/types";
 import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, SafeAreaView, ImageBackground } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, SafeAreaView, ImageBackground, RefreshControl } from "react-native";
 
 export default function MenuScreen() {
     const [show, setShow] = useState<boolean>(false);
     const [secondShow, setSecondShow] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+    const [mealTimes, setMealTimes] = useState<MealTime[]>([]);
+    const [selectedTime, setSelectedTime] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+    const reset = () => {
+        setShow(false);
+        setSecondShow(false);
+        setLoading(false);
+        setSelectedTime(null);
+        setSelectedCategory(null);
+    }
+
+    const onLoadData = async () => {
+        try {
+            setLoading(true);
+            const [restaurants, mealTimes] = await Promise.all([
+                getAllRestaurants(),
+                getAllMealTimes()
+            ]);
+
+            setRestaurants(restaurants);
+            setMealTimes(mealTimes);
+        }
+        finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        onLoadData();
+    }, []);
 
     return (
         <View style={{ flex: 1, paddingTop: 32 }}>
@@ -39,23 +78,38 @@ export default function MenuScreen() {
 
                     {/* Time-based meal categories */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                        <MealTimeCard title="Morning" image={assets.food.food1} onPress={() => setShow(true)} />
-                        <MealTimeCard title="Noon" image={assets.food.food2} />
-                        <MealTimeCard title="Evening" image={assets.food.food3} />
+                        {
+                            mealTimes.map((item, index) => (
+                                <MealTimeCard
+                                    title={item.name}
+                                    image={{ uri: item.image }}
+                                    onPress={() => {
+                                        setSelectedTime(item.id);
+                                        setShow(true);
+                                    }}
+                                    key={index.toString()}
+                                />
+                            ))
+                        }
                     </View>
 
                     {/* Restaurants section */}
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        <RestaurantCard
-                            name="Shopname"
-                            image={assets.banner.banner1}
-                            rating={4}
-                        />
-                        <RestaurantCard
-                            name="Shopname"
-                            image={assets.banner.banner2}
-                            rating={5}
-                        />
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl refreshing={false} onRefresh={onLoadData} />
+                        }
+                    >
+                        {
+                            restaurants.map((item, index) => (
+                                <RestaurantCard
+                                    name={item.name}
+                                    image={{ uri: item.image }}
+                                    rating={item.rating}
+                                    key={index.toString()}
+                                />
+                            ))
+                        }
                     </ScrollView>
                 </View>
             </LinearGradient>
@@ -67,31 +121,21 @@ export default function MenuScreen() {
                     justifyContent: 'center'
                 }}
                 wrapperStyle={{ flex: 0 }}
-                onCancel={() => setShow(false)}
+                onCancel={reset}
             >
-                <View style={{ padding: 16, backgroundColor: "white", borderRadius: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 15 }}>
-                    <TouchableOpacity style={{ gap: 5 }} onPress={() => {
+                <MenuCategory
+                    selectedTime={selectedTime}
+                    onPress={(value) => {
+                        setSelectedCategory(value);
                         setSecondShow(true);
-                        setShow(false);
-                    }}>
-                        <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
-                        <Text>Dish1</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={{ gap: 5 }}>
-                        <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
-                        <Text>Dish2</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={{ gap: 5 }}>
-                        <Image source={assets.food.food1} style={{ width: 110, height: 147 }} />
-                        <Text>Dish2</Text>
-                    </TouchableOpacity>
-                </View>
+                    }}
+                />
             </Modal>
 
             <Modal
                 visible={secondShow}
                 containerStyle={{ paddingBlock: screen.width * 0.08 }}
-                onCancel={() => setSecondShow(false)}
+                onCancel={reset}
             >
                 <LinearGradient
                     colors={['#00696C', '#00CBD2']}
@@ -101,60 +145,16 @@ export default function MenuScreen() {
                         flex: 1,
                     }}
                 >
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 15, paddingTop: 20 }}>
-                        <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }} onPress={() => setSecondShow(false)}>
-                            <Image source={assets.food.food1} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
-                            <Text>Dish1</Text>
-                            <Icon icon={assets.icon.dropdown} size={16} />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}>
-                            <Image source={assets.food.food1} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
-                            <Text>Dish2</Text>
-                            <Icon icon={assets.icon.dropdown} size={16} />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}>
-                            <Image source={assets.food.food1} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
-                            <Text>Dish2</Text>
-                            <Icon icon={assets.icon.dropdown} size={16} />
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={{ flex: 1, paddingHorizontal: 20, paddingBlock: 15 }}>
-                        <View style={{ flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', borderRadius: 10, padding: 10 }}>
-                            <ScrollView
-                                style={{ flex: 1 }}
-                                contentContainerStyle={{ gap: 10 }}
-                                showsVerticalScrollIndicator={false}
-                            >
-                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }} onPress={() => router.push('/(menu)')}>
-                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
-                                    <Text>Pho long dao</Text>
-                                    <Icon icon={assets.icon.star} size={16} />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
-                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
-                                    <Text>Pho long dao</Text>
-                                    <Icon icon={assets.icon.star} size={16} />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
-                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
-                                    <Text>Pho long dao</Text>
-                                    <Icon icon={assets.icon.star} size={16} />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}>
-                                    <Image source={assets.food.banhcanhcua} style={{ width: '100%', resizeMode: 'cover', borderRadius: 5 }} />
-                                    <Text>Pho long dao</Text>
-                                    <Icon icon={assets.icon.star} size={16} />
-                                </TouchableOpacity>
-                            </ScrollView>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity style={styles.closeButton} onPress={() => setSecondShow(false)}>
-                        <Icon icon={assets.icon.chevron_left_2} width={50} height={20} />
-                    </TouchableOpacity>
+                    <MenuStore
+                        onClose={reset}
+                        selectedCategory={selectedCategory}
+                        selectedTime={selectedTime}
+                        onSelect={setSelectedCategory}
+                    />
                 </LinearGradient>
             </Modal>
+
+            {loading && <BackgroundLoading />}
         </View >
     )
 }
@@ -269,11 +269,4 @@ const styles = StyleSheet.create({
         color: '#E0E0E0',
         fontSize: 18,
     },
-    closeButton: {
-        paddingBlock: screen.width * 0.05,
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'white'
-    }
 });

@@ -1,36 +1,31 @@
+import { getAllCategories } from "@/api/modules/category";
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import BackgroundLoading from "@/components/loading/background";
+import { Category } from "@/types";
+import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ResultScreen() {
-    const foods = [
-        {
-            id: 1,
-            name: 'Pho Hanoi',
-            image: assets.food.phohanoi
-        },
-        {
-            id: 2,
-            name: 'Bun bo hue',
-            image: assets.food.bunbohue
-        },
-        {
-            id: 3,
-            name: 'Mi quang',
-            image: assets.food.miquang
-        },
-        {
-            id: 4,
-            name: 'Banh canh cua',
-            image: assets.food.banhcanhcua
-        },
-        {
-            id: 5,
-            name: 'Bun rieu cua',
-            image: assets.food.bunrieucua
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const onLoadCategories = async () => {
+        try {
+            setLoading(true);
+            const categories = await getAllCategories();
+            setCategories(categories);
         }
-    ];
+        finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        onLoadCategories();
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -53,11 +48,11 @@ export default function ResultScreen() {
                     padding: 15
                 }}>
                     <FlatList
-                        data={foods}
-                        keyExtractor={(item) => item.id.toString()}
+                        data={categories}
+                        keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                             <TouchableOpacity style={{ gap: 5, backgroundColor: 'white', borderRadius: 30, padding: 12, paddingBottom: 18 }}>
-                                <Image source={item.image} style={{ width: '100%', borderRadius: 18 }} resizeMode="cover" />
+                                <Image source={{ uri: item.image }} style={{ width: '100%', height: screen.height / 11.16, borderRadius: 18 }} resizeMode="cover" />
                                 <Text style={{ fontSize: 16 }}>{item.name}</Text>
                                 <Icon icon={assets.icon.star} size={16} />
                             </TouchableOpacity>
@@ -68,6 +63,8 @@ export default function ResultScreen() {
                     />
                 </View>
             </LinearGradient>
+
+            {loading && <BackgroundLoading />}
         </View>
     )
 }

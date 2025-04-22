@@ -1,7 +1,7 @@
 import { getAllQuestions } from "@/api/modules/question";
 import assets from "@/assets"
-import { Question } from "@/types";
 import screen from "@/utils/screen"
+import { toast } from "@/utils/toast";
 import { LinearGradient } from "expo-linear-gradient"
 import { router } from "expo-router";
 import React from "react";
@@ -10,8 +10,6 @@ import { Animated, Image, StyleSheet, Text, TouchableOpacity, TouchableWithoutFe
 
 export default function GenderScreen() {
     const [selected, setSelected] = useState<'man' | 'woman' | null>(null);
-    const [questions, setQuestions] = useState<Question[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
 
     const scaleWoman = useRef(new Animated.Value(1)).current;
     const scaleMan = useRef(new Animated.Value(1)).current;
@@ -43,17 +41,22 @@ export default function GenderScreen() {
             }),
         ]).start();
 
-        setTimeout(async () => await onLoadQuestions(), 1500);
+        setTimeout(async () => await onLoadQuestions(), 500);
     };
 
     const onLoadQuestions = async () => {
         try {
-            setLoading(true);
+            toast.loading();
             const questions = await getAllQuestions();
-            setQuestions(questions);
+            router.push({
+                pathname: '/(hint)/selection', params: {
+                    questions: JSON.stringify(questions)
+                }
+            });
+            reset();
         }
         finally {
-            setLoading(false);
+            setTimeout(() => toast.hide(), 500);
         }
     }
 

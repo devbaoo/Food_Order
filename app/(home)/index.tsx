@@ -1,10 +1,13 @@
 import assets from "@/assets";
 import Banner from "@/components/banner";
+import Modal from "@/components/modal";
 import HomeCategory from "@/components/ui/home/home/category";
 import HomeHeader from "@/components/ui/home/home/header";
 import HomeReview from "@/components/ui/home/home/review";
+import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
-import { ScrollView, View, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ScrollView, View, StyleSheet, Image } from "react-native";
 
 export default () => {
     const categories = [
@@ -26,6 +29,12 @@ export default () => {
         assets.banner.banner2,
         assets.banner.banner3
     ]
+
+    const [showAds, setShowAds] = useState<boolean>(false);
+
+    useEffect(() => {
+        setShowAds(true);
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -51,6 +60,20 @@ export default () => {
                     <HomeReview reviews={reviews} />
                 </ScrollView>
             </LinearGradient>
+
+            <Modal
+                wrapperStyle={{
+                    backgroundColor: 'transparent',
+                    flex: 0,
+                    position: 'absolute',
+                    top: screen.height / 3.5,
+                    right: -screen.width / 10,
+                }}
+                visible={showAds}
+                onCancel={() => setShowAds(false)}
+            >
+                <Image source={assets.ads.home_ads} style={{ height: screen.height / 4.23, resizeMode: 'contain' }} />
+            </Modal>
         </View>
     );
 }

@@ -1,10 +1,11 @@
 import { firestore } from "@/lib/firebase-config";
 import { Question } from "@/types";
-import { collection, getDocs } from "@firebase/firestore";
+import { collection, getDocs, orderBy, query } from "@firebase/firestore";
 
 export const getAllQuestions = async () => {
     try {
-        const querySnapshot = await getDocs(collection(firestore, "questions"));
+        const q = query(collection(firestore, "questions"), orderBy("order", "asc"));
+        const querySnapshot = await getDocs(q);
 
         const questions: Question[] = [];
         querySnapshot.forEach((doc) => {

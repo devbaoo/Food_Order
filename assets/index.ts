@@ -65,6 +65,8 @@ import background1 from '@/assets/images/background/background1.png';
 import woman from '@/assets/images/gender/woman.png';
 import man from '@/assets/images/gender/man.png';
 
+import home_ads from '@/assets/images/ads/home-ads.png';
+
 export default {
     splash,
     logo,
@@ -145,5 +147,9 @@ export default {
     gender: {
         woman,
         man
+    },
+
+    ads: {
+        home_ads
     }
 }

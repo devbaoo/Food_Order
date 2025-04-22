@@ -1,4 +1,5 @@
 import screen from "@/utils/screen";
+import React from "react";
 import { ReactNode, useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewStyle } from "react-native";
 

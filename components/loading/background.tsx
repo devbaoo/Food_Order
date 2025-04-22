@@ -1,6 +1,7 @@
 import assets from "@/assets"
 import screen from "@/utils/screen"
 import { LinearGradient } from "expo-linear-gradient"
+import React from "react"
 import { useEffect, useState } from "react"
 import { Image, StyleSheet, Text } from "react-native"
 

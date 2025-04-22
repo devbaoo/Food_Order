@@ -1,8 +1,10 @@
 import assets from "@/assets";
 import BackgroundLoading from "@/components/loading/background";
+import { Question } from "@/types";
 import screen from "@/utils/screen";
+import { toast } from "@/utils/toast";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Image, StyleSheet, TouchableOpacity, View, Text } from "react-native";
@@ -12,6 +14,9 @@ export default function SelectionScreen() {
     const [screenIndex, setScreenIndex] = useState(0);
     const [selections, setSelections] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [questions, setQuestions] = useState<Question[]>([]);
+
+    const params = useLocalSearchParams();
 
     const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -25,38 +30,29 @@ export default function SelectionScreen() {
         }, 500);
     }, []);
 
-    const screens = [
-        {
-            question: 'Do you follow a vegetarian or vegan or normal diet?',
-            options: ['Vegetarian', 'Vegan', 'Normal'],
-        },
-        {
-            question: 'Do you have any food allergies',
-            options: ['Seafood', 'Peanut', 'Dairy', 'Red meat', 'Others'],
-        },
-        {
-            question: 'What kind of flavors do you like?',
-            options: ['Sweet', 'Sour', 'Salty', 'Spicy', 'Rich']
-        },
-        {
-            question: 'Do you prefer dishes from a specific cuisine?',
-            options: ['Vietnamese', 'Japanese', 'Korean', 'Italian', 'Chinese']
+    useEffect(() => {
+        if (!params || !params.questions) {
+            toast.info("An error occured!", "Check again your server!");
+            router.back();
+            return;
         }
-    ];
+
+        setQuestions(JSON.parse(params.questions as string));
+    }, [params?.questions]);
 
     const onSelectOption = (option: string) => {
 
-        if (selections.length === screens.length - 1) {
+        if (selections.length === questions.length - 1) {
             setSelections(prev => [...prev.slice(0, screenIndex), option]);
             setLoading(true);
             return;
         }
 
-        // Thêm câu trả lời hiện tại
+        // Push current answer
         const nextIndex = screenIndex + 1;
         setSelections(prev => [...prev.slice(0, screenIndex), option]);
 
-        // Fade out → chuyển màn hình → fade in
+        // Fade out → change screen → fade in
         Animated.timing(fadeAnim, {
             toValue: 0,
             duration: 300,
@@ -83,7 +79,7 @@ export default function SelectionScreen() {
             duration: 300,
             useNativeDriver: true,
         }).start(() => {
-            // Quay lại màn trước và xóa câu trả lời hiện tại
+            // Back to previous screen and remove the current answer
             setScreenIndex(prev => prev - 1);
             setSelections(prev => prev.slice(0, prev.length - 1));
             fadeAnim.setValue(0);
@@ -127,9 +123,9 @@ export default function SelectionScreen() {
                         <Image source={assets.logo} style={{ height: screen.height / 7.7, alignSelf: 'center' }} resizeMode="contain" />
                         <Animated.View style={{ opacity: fadeAnim, paddingBlock: 30, gap: 15 }}>
                             <View style={styles.questionTextContainer}>
-                                <Text style={styles.questionText}>{screens[screenIndex].question}</Text>
+                                <Text style={styles.questionText}>{questions[screenIndex]?.text}</Text>
                             </View>
-                            {screens[screenIndex].options.map(option => (
+                            { questions.length > 0 && questions[screenIndex].options.map(option => (
                                 <TouchableOpacity
                                     key={option}
                                     onPress={() => onSelectOption(option)}

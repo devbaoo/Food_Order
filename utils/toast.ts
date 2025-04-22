@@ -24,4 +24,12 @@ export const toast = {
             text2: msg,
             visibilityTime: timeout,
         }),
+    loading: (title?: string, msg?: string) =>
+        Toast.show({
+            type: 'loading',
+            text1: title || 'Loading...',
+            text2: msg,
+            autoHide: false, // Không tự động ẩn
+        }),
+    hide: () => Toast.hide()
 };
