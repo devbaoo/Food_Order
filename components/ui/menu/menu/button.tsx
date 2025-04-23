@@ -1,34 +1,46 @@
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import { firestore } from "@/lib/firebase-config";
+import { Cart } from "@/types";
 import screen from "@/utils/screen";
-import React from "react";
-import { StyleSheet, TouchableOpacity, Text, View } from "react-native";
-
-interface MenuItem {
-    id: number,
-    name: string,
-    price: string
-}
-
-type SelectedItem = MenuItem & { quantity: number };
+import { doc, setDoc } from "@firebase/firestore";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { StyleSheet, TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
 
 interface MenuAddToCartButtonProps {
-    selectedItems: SelectedItem[];
+    cart: Cart | null;
 }
 
-const MenuAddToCartButton: React.FC<MenuAddToCartButtonProps> = ({...props}) => {
-    const {selectedItems} = props;
+const MenuAddToCartButton: React.FC<MenuAddToCartButtonProps> = ({ ...props }) => {
+    const { cart } = props;
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const onAddToCart = async () => {
+        setLoading(true);
+        try {
+            if (cart) {
+                await setDoc(doc(firestore, 'carts', cart.id), { ...cart });
+                router.replace('/(cart)');
+            }
+        } catch (err) {
+            console.error("Error adding cart items:", err);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
-        <TouchableOpacity style={styles.addToCartButton}>
+        <TouchableOpacity style={styles.addToCartButton} onPress={onAddToCart} disabled={loading}>
+            {loading && <ActivityIndicator color="white" size="small" style={{ marginRight: 8 }} />}
             <Text style={styles.addToCartButtonText}>Add to cart</Text>
             <View style={styles.cartIcon}>
                 <Icon icon={assets.icon.cart_white} size={16} />
                 {
-                    selectedItems.length > 0 && (
+                    cart && cart.cartItems.length > 0 && (
                         <View style={{ top: -8, right: -12, position: 'absolute' }}>
                             <View style={styles.quantityWrapper}>
-                                <Text style={{ fontSize: 12.4, color: 'white' }}>{selectedItems.length}</Text>
+                                <Text style={{ fontSize: 12.4, color: 'white' }}>{cart?.cartItems.length}</Text>
                             </View>
                         </View>
                     )

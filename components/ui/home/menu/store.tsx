@@ -74,7 +74,11 @@ const MenuStore: React.FC<MenuStoreProps> = ({ ...prosp }) => {
                             restaurants.map((item, index) => (
                                 <TouchableOpacity
                                     style={{ backgroundColor: 'white', padding: 5, paddingBottom: 10, borderRadius: 10, gap: 5 }}
-                                    onPress={() => router.push('/(menu)')}
+                                    onPress={() => router.push({
+                                        pathname: '/(menu)', params: {
+                                            restaurant: JSON.stringify(item)
+                                        }
+                                    })}
                                     key={index.toString()}
                                 >
                                     <Image source={{ uri: item.image }} style={{ width: screen.width / 1.19, height: screen.height / 11.16, borderRadius: 5 }} />

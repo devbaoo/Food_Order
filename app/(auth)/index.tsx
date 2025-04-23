@@ -1,54 +1,78 @@
 import assets from '@/assets';
+import { auth, firestore } from '@/lib/firebase-config';
+import { useAuth } from '@/providers/AuthenticatedProvider';
+import { Cart } from '@/types';
+import { collection, doc, getDocs, query, setDoc, where } from '@firebase/firestore';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
-import { StyleSheet, View, Image, ImageBackground } from 'react-native';
+import { onAuthStateChanged } from 'firebase/auth';
+import React from 'react';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, ImageBackground, ActivityIndicator } from 'react-native';
 
 export default () => {
-    // const [loading, setLoading] = useState<boolean>(false);
-    // const token = store.getState().global?.token;
+    const { setUser, setCart } = useAuth();
+    const [loading, setLoading] = useState(true);
 
-    // useEffect(() => {
-    //     setTimeout(() => {
-    //         if (token) {
-    //             fetchUserInformation();
-    //             return;
-    //         }
-    //         router.push('/(auth)/welcome');
-    //     }, 300);
-    // }, [token]);
+    const checkIsCartExists = async (id: string): Promise<Cart | null> => {
+        const q = query(collection(firestore, "carts"), where("userId", "==", id));
+        const querySnap = await getDocs(q);
+
+        if (!querySnap.empty) {
+            const cartDoc = querySnap.docs[0];
+            return {
+                id: cartDoc.id,
+                userId: cartDoc.data()?.userId ?? '',
+                cartItems: cartDoc.data()?.cartItems ?? [],
+                totalPrice: cartDoc.data()?.totalPrice ?? 0
+            };
+        }
+
+        const newCartRef = doc(collection(firestore, "carts"));
+        await setDoc(newCartRef, { userId: id });
+      
+        return {
+          id: newCartRef.id,
+          userId: id,
+          cartItems: [],
+          totalPrice: 0
+        };
+    };
 
     useEffect(() => {
-        setTimeout(() => router.push("/(home)"), 1000);
+        const unsubscribe = onAuthStateChanged(auth, async (authenticatedUser) => {
+            setTimeout(async () => {
+                if (authenticatedUser) {
+                    setUser(authenticatedUser);
+                    const cart = await checkIsCartExists(
+                        authenticatedUser.uid
+                    );
+
+                    if (cart) {
+                        setCart(cart);
+                        router.push("/(home)");
+                    }
+                } else {
+                    setUser(null);
+                    setCart(null);
+                    router.push("/(auth)/login");
+                }
+                setLoading(false);
+            }, 500);
+        });
+
+        return unsubscribe;
     }, []);
 
-    // const fetchUserInformation = async () => {
-    //     try {
-    //         setLoading(true);
-    //         const { data } = await getProfile();
-    //         if (data) {
-    //             store.dispatch(setUserInfo(data));
-    //             router.push('/(home)');
-    //             chatService.connectSocket(token, data.userId);
-    //         }
-    //         else {
-    //             toast.error("Something went wrong", "User data null, please re-authorize!");
-    //             router.replace('/(auth)/login');
-    //         }
-    //     }
-    //     finally {
-    //         setLoading(false);
-    //     }
-    // }
 
     return (
         <ImageBackground source={assets.splash} style={styles.container}>
-            {/* {
+            {
                 loading &&
                 <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                    <ActivityIndicator size="small" color={colors.defaultBorder} />
+                    <ActivityIndicator size="small" color="#f6f6f6" />
                     <Text style={styles.text}>Fetching information, please wait!</Text>
                 </View>
-            } */}
+            }
         </ImageBackground>
     );
 };
@@ -56,10 +80,11 @@ export default () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: "center",
+        justifyContent: "flex-end",
         alignItems: "center",
         backgroundColor: "white",
-        padding: 10
+        padding: 10,
+        paddingBottom: 30
     },
 
     splash: {
@@ -70,6 +95,6 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 16,
         fontWeight: "bold",
-        // color: colors.defaultBorder,
+        color: "white"
     },
 });

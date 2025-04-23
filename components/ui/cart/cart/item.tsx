@@ -1,31 +1,52 @@
+import { getFoodById } from "@/api/modules/food";
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import { CartItem as CartItemType, Food } from "@/types";
+import React from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
 
 interface CartItemProps {
-    increaseQuantity: () => void;
-    quantity: number;
+    item: CartItemType | null;
+    onAdd: (item: Food) => void;
+    onRemove: (item: Food) => void;
+    loading: boolean;
 }
 
 const CartItem: React.FC<CartItemProps> = ({ ...props }) => {
-    const { increaseQuantity, quantity } = props;
+    const { item, onAdd, onRemove, loading } = props;
+    const [food, setFood] = useState<Food | null>(null);
+
+    const onLoad = async (id: string) => {
+        try {
+            const food = await getFoodById(id);
+            setFood(food);
+        }
+        finally {
+
+        }
+    }
+
+    useEffect(() => {
+        if (item) onLoad(item.foodId);
+    }, [item]);
 
     return (
         <View style={styles.cartItem}>
             <Image
-                source={assets.food.pho}
+                source={food ? { uri: food.image } : assets.food.pho}
                 style={styles.itemImage}
             />
             <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>Pho Hanoi</Text>
-                <Text style={styles.itemPrice}>$3.45</Text>
+                <Text style={styles.itemName}>{food?.name}</Text>
+                <Text style={styles.itemPrice}>${food?.price}</Text>
             </View>
             <View style={styles.quantityControl}>
-                <TouchableOpacity onPress={() => { }}>
+                <TouchableOpacity onPress={() => food && onRemove(food)} disabled={loading}>
                     <Icon icon={assets.icon.trash} size={18} />
                 </TouchableOpacity>
-                <Text style={styles.quantityText}>{quantity}</Text>
-                <TouchableOpacity onPress={increaseQuantity}>
+                <Text style={styles.quantityText}>{item?.quantity ?? 0}</Text>
+                <TouchableOpacity onPress={() => food && onAdd(food)} disabled={loading}>
                     <Icon icon={assets.icon.plus} size={18} />
                 </TouchableOpacity>
             </View>

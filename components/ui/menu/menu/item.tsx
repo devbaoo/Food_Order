@@ -1,31 +1,24 @@
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import { Cart, CartItem, Food } from "@/types";
 import screen from "@/utils/screen";
 import React from "react";
 import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
 
-interface MenuItem {
-    id: number,
-    name: string,
-    price: string
-}
-
-type SelectedItem = MenuItem & { quantity: number };
-
 interface MenuItemProps {
-    item: MenuItem;
+    item: Food;
     onAdd: () => void;
     onRemove: () => void;
-    selectedItems: SelectedItem[];
+    cart: Cart | null;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({ ...props }) => {
-    const { item, onAdd, onRemove, selectedItems } = props;
+    const { item, onAdd, onRemove, cart } = props;
 
     return (
         <View style={styles.menuItem}>
             <Image
-                source={assets.food.phohanoi}
+                source={{ uri: item.image }}
                 style={styles.foodImage}
             />
             <View style={{ flex: 1, paddingTop: 15, paddingBottom: 10, paddingRight: 10 }}>
@@ -36,7 +29,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ ...props }) => {
                 <View
                     style={[
                         styles.addButton,
-                        selectedItems.some((x: any) => x.id === item.id) ? {
+                        cart?.cartItems.some((x: CartItem) => x.foodId === item.id) ? {
                             paddingHorizontal: 15,
                             paddingBlock: 8,
                         } : {
@@ -44,12 +37,12 @@ const MenuItem: React.FC<MenuItemProps> = ({ ...props }) => {
                         }
                     ]}
                 >
-                    {selectedItems.some((x: any) => x.id === item.id) && (
+                    {cart && cart.cartItems.some((x: CartItem) => x.foodId === item.id) && (
                         <>
                             <TouchableOpacity onPress={onRemove}>
                                 <Icon icon={assets.icon.trash} size={16} />
                             </TouchableOpacity>
-                            <Text>{selectedItems.find((x: any) => x.id === item.id)?.quantity ?? 1}</Text>
+                            <Text>{cart?.cartItems.find((x: CartItem) => x.foodId === item.id)?.quantity ?? 1}</Text>
                         </>
                     )}
                     <TouchableOpacity onPress={onAdd}>

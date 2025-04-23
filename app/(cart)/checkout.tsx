@@ -5,6 +5,7 @@ import CheckoutHeader from "@/components/ui/cart/checkout/header";
 import CheckoutInfo from "@/components/ui/cart/checkout/info";
 import CheckoutPayment from "@/components/ui/cart/checkout/payment";
 import CheckoutSummary from "@/components/ui/cart/checkout/summary";
+import React from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
 
 export default function CheckoutScreen() {

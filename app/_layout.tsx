@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native';
 import React from 'react';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '@/components/loading/toast';
+import { AuthenticatedProvider } from '@/providers/AuthenticatedProvider';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -33,14 +34,16 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AppNavigator />
-          <Toast config={toastConfig} />
-          <StatusBar style="dark" />
-        </ThemeProvider>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <AuthenticatedProvider>
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1 }}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <AppNavigator />
+            <Toast config={toastConfig} />
+            <StatusBar style="dark" />
+          </ThemeProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </AuthenticatedProvider>
   );
 }

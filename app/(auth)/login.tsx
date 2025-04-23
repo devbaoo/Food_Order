@@ -1,9 +1,46 @@
 import assets from "@/assets";
+import { auth } from "@/lib/firebase-config";
 import screen from "@/utils/screen";
+import { toast } from "@/utils/toast";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image, TextInput, TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import React, { useState } from "react";
+import { Image, TextInput, TouchableOpacity, View, Text, StyleSheet, ActivityIndicator } from "react-native";
 
 export default function LoginScreen() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [errorState, setErrorState] = useState<string | null>(null);
+
+    const handleLogin = async () => {
+        if (!email) {
+            toast.error("Lỗi", "Email không được để trống");
+            return;
+        } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
+            toast.error("Lỗi", "Email không hợp lệ");
+            return;
+        }
+
+        if (!password) {
+            toast.error("Lỗi", "Mật khẩu không được để trống");
+            return;
+        } else if (password.length < 6) {
+            toast.error("Lỗi", "Mật khẩu phải có ít nhất 6 ký tự");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error: any) {
+            setErrorState(error.message);
+            toast.error("Lỗi đăng nhập", "Vui lòng kiểm tra lại thông tin đăng nhập.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <LinearGradient
             colors={['#00696C', '#00CBD2']}
@@ -14,9 +51,13 @@ export default function LoginScreen() {
             <Image source={assets.logo} style={styles.logo} />
             <View style={styles.form}>
                 <TextInput
-                    placeholder="Phone number, username or email"
+                    placeholder="Email"
                     style={styles.input}
                     placeholderTextColor="black"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                 />
                 <View style={styles.passwordInputContainer}>
                     <TextInput
@@ -24,13 +65,23 @@ export default function LoginScreen() {
                         secureTextEntry={true}
                         style={styles.input}
                         placeholderTextColor="black"
+                        value={password}
+                        onChangeText={setPassword}
                     />
                 </View>
                 <TouchableOpacity style={styles.forgotButton}>
                     <Text>Forgot password?</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submit}>
-                    <Text style={styles.submitText}>Log in</Text>
+                <TouchableOpacity
+                    style={styles.submit}
+                    onPress={handleLogin}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#005457" />
+                    ) : (
+                        <Text style={styles.submitText}>Log in</Text>
+                    )}
                 </TouchableOpacity>
             </View>
         </LinearGradient>

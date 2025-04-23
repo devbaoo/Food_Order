@@ -1,5 +1,6 @@
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import { Cart, Restaurant } from "@/types";
 import screen from "@/utils/screen";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
@@ -9,10 +10,12 @@ import { interpolate, SharedValue, useAnimatedStyle } from "react-native-reanima
 
 interface MenuHeaderProps {
     progress: SharedValue<number>;
+    restaurant: Restaurant | null;
+    cart: Cart | null;
 }
 
 const MenuHeader: React.FC<MenuHeaderProps> = ({ ...props }) => {
-    const { progress } = props;
+    const { progress, restaurant, cart } = props;
 
     const bgStyle = useAnimatedStyle(() => {
         return {
@@ -51,11 +54,11 @@ const MenuHeader: React.FC<MenuHeaderProps> = ({ ...props }) => {
     return (
         <View style={styles.header}>
             <Animated.View style={[StyleSheet.absoluteFill, bgStyle]}>
-                <ImageBackground
+                {cart && cart.cartItems.length === 0 && <ImageBackground
                     style={{ flex: 1 }}
                     resizeMode="cover"
-                    source={assets.food.banhcanhcua}
-                />
+                    source={restaurant ? { uri: restaurant.image } : assets.food.banhcanhcua}
+                />}
             </Animated.View>
 
             <Animated.View style={[styles.blur, blurStyle]}>
@@ -69,12 +72,15 @@ const MenuHeader: React.FC<MenuHeaderProps> = ({ ...props }) => {
                         <View style={{}} />
                     </TouchableOpacity>
                     <View style={styles.titleWrapper}>
-                        <Animated.Text style={[titleStyle, styles.absText]}>
-                            <Text style={styles.headerTitle}>Pho Long Dao</Text>
-                        </Animated.Text>
-                        <Animated.Text style={[title2Style, styles.absText]}>
-                            <Text style={styles.headerTitle}>Options</Text>
-                        </Animated.Text>
+                        {cart && cart.cartItems.length === 0 ? (
+                            <Animated.Text style={[titleStyle, styles.absText]}>
+                                <Text style={styles.headerTitle}>{restaurant?.name ?? 'Menu'}</Text>
+                            </Animated.Text>
+                        ) : (
+                            <Animated.Text style={[title2Style, styles.absText]}>
+                                <Text style={styles.headerTitle}>Options</Text>
+                            </Animated.Text>
+                        )}
                     </View>
                     <TouchableOpacity style={styles.ordersButton}>
                         <Icon icon={assets.icon.order} width={16} height={17.62} />

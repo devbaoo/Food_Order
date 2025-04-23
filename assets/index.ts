@@ -59,6 +59,7 @@ import miquang from '@/assets/images/food/miquang.png';
 import banhcanhcua from '@/assets/images/food/banhcanhcua.png';
 import bunrieucua from '@/assets/images/food/bunrieucua.png';
 import pho from '@/assets/images/food/pho.png';
+import nuoccam from '@/assets/images/food/nuoccam.png';
 
 import background1 from '@/assets/images/background/background1.png';
 
@@ -137,7 +138,8 @@ export default {
         miquang,
         banhcanhcua,
         bunrieucua,
-        pho
+        pho,
+        nuoccam
     },
 
     background: {

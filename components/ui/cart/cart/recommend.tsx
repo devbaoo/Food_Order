@@ -1,4 +1,8 @@
+import assets from "@/assets";
+import Icon from "@/components/icon";
+import screen from "@/utils/screen";
 import { AntDesign } from "@expo/vector-icons";
+import React from "react";
 import { StyleSheet, View, Text, TouchableOpacity, Image } from "react-native";
 
 const CartRecommendItem = () => {
@@ -12,10 +16,15 @@ const CartRecommendItem = () => {
             </View>
 
             <View style={styles.recommendedItem}>
-                <Image
-                    source={{ uri: 'https://via.placeholder.com/80' }}
-                    style={styles.recommendedImage}
-                />
+                <View style={{ width: screen.width / 2.6875, height: screen.height / 6.38, borderRadius: 10, backgroundColor: '#F6F6F6', alignItems: 'center', justifyContent: 'center' }}>
+                    <Image
+                        source={assets.food.nuoccam}
+                        style={styles.recommendedImage}
+                    />
+                    <TouchableOpacity style={styles.addButton}>
+                        <Icon icon={assets.icon.plus} size={18} />
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.recommendedDetails}>
                     <Text style={styles.recommendedName}>Purex</Text>
                     <View style={styles.ratingContainer}>
@@ -24,9 +33,7 @@ const CartRecommendItem = () => {
                     </View>
                     <Text style={styles.recommendedPrice}>$1</Text>
                 </View>
-                <TouchableOpacity style={styles.addButton}>
-                    <AntDesign name="plus" size={20} color="black" />
-                </TouchableOpacity>
+
             </View>
         </View>
     )
@@ -53,16 +60,13 @@ const styles = StyleSheet.create({
         color: '#00BCD4',
     },
     recommendedItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        justifyContent: 'center',
         paddingVertical: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(0, 0, 0, 1)'
+        gap: 6
     },
     recommendedImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 8,
+        width: screen.width / 3.467,
+        height: screen.height / 6.38,
     },
     recommendedDetails: {
         flex: 1,
@@ -88,5 +92,10 @@ const styles = StyleSheet.create({
     },
     addButton: {
         padding: 8,
+        position: 'absolute',
+        backgroundColor: 'white',
+        bottom: 5,
+        right: 5,
+        borderRadius: screen.width
     },
 })

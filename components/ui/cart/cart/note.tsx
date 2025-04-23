@@ -1,7 +1,16 @@
+import { Cart } from "@/types";
 import { AntDesign, Feather } from "@expo/vector-icons";
+import React from "react";
 import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
 
-const CartNote = () => {
+interface CartNoteProps {
+    value: number;
+    cart: Cart | null;
+}
+
+const CartNote: React.FC<CartNoteProps> = ({ ...props }) => {
+    const { value, cart } = props;
+
     return (
         <View style={{ borderWidth: 1, borderColor: '#ECECEC', borderRadius: 10 }}>
             {/* Add Note */}
@@ -19,7 +28,7 @@ const CartNote = () => {
                     <Feather name="truck" size={20} color="black" />
                     <Text style={styles.deliveryFeeText}>Delivery</Text>
                 </View>
-                <Text style={styles.deliveryFeeAmount}>$6.00</Text>
+                <Text style={styles.deliveryFeeAmount}>${(cart?.totalPrice ?? 0) >= value ? '0.00' : '6.00'}</Text>
             </View>
         </View>
     )

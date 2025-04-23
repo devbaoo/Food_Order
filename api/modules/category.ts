@@ -7,8 +7,6 @@ export const getAllCategories = async (time?: string | null) => {
         let q;
 
         if (time) {
-            // Nếu có mealTimeId thì lọc theo
-            console.log(time);
             q = query(
                 collection(firestore, "categories"),
                 where("mealTimes", "array-contains", time)
