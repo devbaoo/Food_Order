@@ -167,7 +167,7 @@ export default function CartScreen() {
                 <CartDeliveryProgress value={FREE_DELIVERY_THRESHOLD} cart={cart} />
 
                 {/* Recommended Items */}
-                <CartRecommendItem />
+                <CartRecommendItem value={FREE_DELIVERY_THRESHOLD} cart={cart} onAdd={addToCart} onRemove={removeFromCart} />
 
                 <CartNote value={FREE_DELIVERY_THRESHOLD} cart={cart} />
             </ScrollView>

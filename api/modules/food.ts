@@ -58,3 +58,32 @@ export const getFoodById = async (id: string) => {
         return null;
     }
 };
+
+export const getAllFoodsByPrice = async (price: number) => {
+    try {
+        let q;
+
+        q = query(
+            collection(firestore, "foods"),
+            where("price", "<=", price)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        const foods: Food[] = [];
+        querySnapshot.forEach((doc) => {
+            foods.push({
+                id: doc?.id ?? '',
+                name: doc.data()?.name ?? '',
+                image: doc.data()?.image ?? '',
+                restaurant: doc.data()?.restaurant ?? '',
+                price: doc.data()?.price ?? 0,
+            });
+        });
+
+        return foods;
+    } catch (error) {
+        console.error("An error occured while fetching foods: ", error);
+        return [];
+    }
+};

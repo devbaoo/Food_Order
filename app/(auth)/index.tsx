@@ -1,8 +1,9 @@
 import assets from '@/assets';
 import { auth, firestore } from '@/lib/firebase-config';
 import { useAuth } from '@/providers/AuthenticatedProvider';
-import { Cart } from '@/types';
-import { collection, doc, getDocs, query, setDoc, where } from '@firebase/firestore';
+import { Cart, Info } from '@/types';
+import { toast } from '@/utils/toast';
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from '@firebase/firestore';
 import { router } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import React from 'react';
@@ -10,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ImageBackground, ActivityIndicator } from 'react-native';
 
 export default () => {
-    const { setUser, setCart } = useAuth();
+    const { setUser, setCart, setInfo } = useAuth();
     const [loading, setLoading] = useState(true);
 
     const checkIsCartExists = async (id: string): Promise<Cart | null> => {
@@ -38,18 +39,44 @@ export default () => {
         };
     };
 
+    const checkIsInformationExists = async (id: string): Promise<Info | null> => {
+        const docRef = doc(firestore, 'users', id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return {
+                id: docSnap.id,
+                name: docSnap.data()?.name ?? '',
+                avatar: docSnap.data()?.avatar ?? ''
+            }; // Trả về dữ liệu document
+        } else {
+            return null;
+        }
+    }
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (authenticatedUser) => {
             setTimeout(async () => {
                 if (authenticatedUser) {
                     setUser(authenticatedUser);
-                    const cart = await checkIsCartExists(
-                        authenticatedUser.uid
-                    );
+                    const [cart, userInfo] = await Promise.all([
+                        checkIsCartExists(
+                            authenticatedUser.uid
+                        ),
+                        checkIsInformationExists(
+                            authenticatedUser.uid
+                        )
+                    ]);
 
-                    if (cart) {
+                    if (cart && userInfo) {
+                        setInfo(userInfo);
                         setCart(cart);
                         router.push("/(home)");
+                    }
+                    else {
+                        toast.error("Alert", "Something went wrong with your information, please re-authorize!");
+                        router.replace('/(auth)/login');
+                        return;
                     }
                 } else {
                     setUser(null);
