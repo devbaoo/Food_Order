@@ -2,6 +2,7 @@ import assets from "@/assets";
 import Icon from "@/components/icon";
 import SearchModal from "@/components/modal/search";
 import { LinearGradient } from "expo-linear-gradient";
+import React from "react";
 import { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 

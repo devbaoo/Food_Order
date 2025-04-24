@@ -10,6 +10,7 @@ import { getAllFoods } from "@/api/modules/food";
 import BackgroundLoading from "@/components/loading/background";
 import { useAuth } from "@/providers/AuthenticatedProvider";
 import { toast } from "@/utils/toast";
+import { calculateCart } from "@/utils/calculate";
 
 export default function MenuScreen() {
     const { cart, setCart } = useAuth();
@@ -31,46 +32,7 @@ export default function MenuScreen() {
     const addToCart = (item: Food) => {
         if (!cart) return;
 
-        const existingItem = cart.cartItems.find(x => x.foodId === item.id);
-
-        if (existingItem) {
-            setCart(prevCart => {
-                if (!prevCart) return null;
-
-                const updatedItems = prevCart.cartItems.map(x =>
-                    x.foodId === item.id ? { ...x, quantity: x.quantity + 1 } : x
-                );
-
-                const totalPrice = updatedItems.reduce(
-                    (total, current) => total + current.quantity * current.price,
-                    0
-                );
-
-                return {
-                    ...prevCart,
-                    cartItems: updatedItems,
-                    totalPrice,
-
-                };
-            });
-        } else {
-            setCart(prevCart => {
-                if (!prevCart) return null;
-
-                const updatedItems = [...prevCart.cartItems, { foodId: item.id, quantity: 1, price: item.price }];
-
-                const totalPrice = updatedItems.reduce(
-                    (total, current) => total + current.quantity * current.price,
-                    0
-                );
-
-                return {
-                    ...prevCart,
-                    cartItems: updatedItems,
-                    totalPrice,
-                };
-            });
-        }
+        setCart(prevCart => prevCart ? calculateCart(prevCart, item, 'add') : null);
 
         handleToggle();
     };
@@ -78,48 +40,7 @@ export default function MenuScreen() {
     const removeFromCart = (item: Food) => {
         if (!cart) return;
 
-        const existingItem = cart.cartItems.find(x => x.foodId === item.id);
-
-        if (existingItem) {
-            if (existingItem.quantity === 1) {
-                setCart(prevCart => {
-                    if (!prevCart) return null;
-    
-                    const updatedItems = cart.cartItems.filter(x => x.foodId !== item.id);
-    
-                    const totalPrice = updatedItems.reduce(
-                        (total, current) => total + current.quantity * current.price,
-                        0
-                    );
-    
-                    return {
-                        ...prevCart,
-                        cartItems: updatedItems,
-                        totalPrice,
-                    };
-                });
-            }
-            else {
-                setCart(prevCart => {
-                    if (!prevCart) return null;
-
-                    const updatedItems = prevCart.cartItems.map(x =>
-                        x.foodId === item.id ? { ...x, quantity: x.quantity - 1 } : x
-                    );
-
-                    const totalPrice = updatedItems.reduce(
-                        (total, current) => total + current.quantity * current.price,
-                        0
-                    );
-
-                    return {
-                        ...prevCart,
-                        cartItems: updatedItems,
-                        totalPrice,
-                    };
-                });
-            }
-        }
+        setCart(prevCart => prevCart ? calculateCart(prevCart, item, 'remove') : null);
     }
 
     const handleToggle = () => {

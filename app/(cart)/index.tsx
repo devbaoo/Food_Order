@@ -28,10 +28,10 @@ export default function CartScreen() {
 
     useEffect(() => {
         if (shouldSyncCart) {
-          updateCart();
-          setShouldSyncCart(false); // reset
+            updateCart();
+            setShouldSyncCart(false); // reset
         }
-      }, [shouldSyncCart]);
+    }, [shouldSyncCart]);
 
     const addToCart = async (item: Food) => {
         if (!cart) return;
@@ -163,13 +163,19 @@ export default function CartScreen() {
                     ))}
                 </View>
 
-                {/* Delivery Progress */}
-                <CartDeliveryProgress value={FREE_DELIVERY_THRESHOLD} cart={cart} />
+                {
+                    cart && cart.cartItems.length > 0 && (
+                        <>
+                            {/* Delivery Progress */}
+                            <CartDeliveryProgress value={FREE_DELIVERY_THRESHOLD} cart={cart} />
 
-                {/* Recommended Items */}
-                <CartRecommendItem value={FREE_DELIVERY_THRESHOLD} cart={cart} onAdd={addToCart} onRemove={removeFromCart} />
+                            {/* Recommended Items */}
+                            <CartRecommendItem value={FREE_DELIVERY_THRESHOLD} cart={cart} onAdd={addToCart} onRemove={removeFromCart} />
 
-                <CartNote value={FREE_DELIVERY_THRESHOLD} cart={cart} />
+                            <CartNote value={FREE_DELIVERY_THRESHOLD} cart={cart} />
+                        </>
+                    )
+                }
             </ScrollView>
 
             {/* Checkout Button */}

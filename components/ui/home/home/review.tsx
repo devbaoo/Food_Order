@@ -1,10 +1,11 @@
 import assets from "@/assets";
+import { Info } from "@/types";
 import screen from "@/utils/screen";
-import { Feather } from "@expo/vector-icons"
+import React from "react";
 import { View, Text, TouchableOpacity, Image, ScrollView, StyleSheet } from "react-native"
 
 interface HomeReviewProps {
-    reviews: { id: number, name: string, rating: number, image: any }[];
+    reviews: Info[];
 }
 
 const HomeReview: React.FC<HomeReviewProps> = ({ ...props }) => {
@@ -28,7 +29,7 @@ const HomeReview: React.FC<HomeReviewProps> = ({ ...props }) => {
                     <View key={review.id} style={styles.reviewCard}>
                         <View style={styles.reviewerImageContainer}>
                             <Image
-                                source={review.image}
+                                source={{ uri: review.avatar }}
                                 style={styles.reviewerImage}
                                 resizeMode="cover"
                             />
@@ -92,8 +93,8 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     reviewerImage: {
-        width: 80,
-        height: 80,
+        width: '100%',
+        height: '80%',
         borderRadius: 40,
     },
     reviewerName: {

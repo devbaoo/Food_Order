@@ -1,10 +1,14 @@
 import assets from "@/assets";
+import FavouriteShop from "@/components/ui/home/favourite/shop";
+import { useCountdown } from "@/hooks/useCountDown";
 import screen from "@/utils/screen";
-import { Feather, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
+import React from "react";
+import { StyleSheet, View, Text, Image, ScrollView, ImageBackground } from "react-native";
 
 export default function FavouriteScreen() {
+    const countdown = useCountdown(5);
+
     return (
         <View style={styles.container}>
             <LinearGradient
@@ -74,14 +78,28 @@ export default function FavouriteScreen() {
                         </View>
                     </ScrollView>
 
-                    <View style={{
-                        width: '100%',
-                        height: 150,
-                        backgroundColor: 'rgba(255, 255, 255, 0.33)',
-                        marginBlock: 15,
-                        borderRadius: 20
-                    }}
-                    />
+                    <ImageBackground
+                        source={assets.ads.favourite_ads}
+                        style={{
+                            width: '100%',
+                            height: 150,
+                            backgroundColor: 'rgba(255, 255, 255, 0.33)',
+                            marginBlock: 15,
+                            borderRadius: 20
+                        }}
+                    >
+                        <View style={{
+                            position: 'absolute',
+                            bottom: 10,
+                            right: screen.width * 0.05,
+                            paddingBlock: 5,
+                            paddingHorizontal: 10,
+                            borderRadius: 10,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)'
+                        }}>
+                            <Text style={{ fontSize: 40, color: "white" }}>{countdown.formattedTime}</Text>
+                        </View>
+                    </ImageBackground>
 
                     {/* Section Header */}
                     <View style={styles.sectionHeader}>
@@ -89,47 +107,7 @@ export default function FavouriteScreen() {
                     </View>
 
                     {/* Banner */}
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{ paddingBlock: 15, gap: 15 }}
-                    >
-                        <View style={[styles.shopCard, { width: '100%' }]}>
-                            <View style={[styles.logoContainer, { maxHeight: 174, marginBottom: 12 }]}>
-                                <Image
-                                    source={assets.banner.banner1}
-                                    style={{ width: '100%', resizeMode: 'contain' }}
-                                />
-                            </View>
-                            <Text style={styles.shopLabel}>Shopname</Text>
-                            <View style={styles.ratingsContainer}>
-                                <Image source={assets.icon.star} style={{ width: 16, height: 16 }} />
-                            </View>
-                        </View>
-                        <View style={[styles.shopCard, { width: '100%' }]}>
-                            <View style={[styles.logoContainer, { maxHeight: 174, marginBottom: 12 }]}>
-                                <Image
-                                    source={assets.banner.banner1}
-                                    style={{ width: '100%', resizeMode: 'contain' }}
-                                />
-                            </View>
-                            <Text style={styles.shopLabel}>Shopname</Text>
-                            <View style={styles.ratingsContainer}>
-                                <Image source={assets.icon.star} style={{ width: 16, height: 16 }} />
-                            </View>
-                        </View>
-                        <View style={[styles.shopCard, { width: '100%' }]}>
-                            <View style={[styles.logoContainer, { maxHeight: 174, marginBottom: 12 }]}>
-                                <Image
-                                    source={assets.banner.banner1}
-                                    style={{ width: '100%', resizeMode: 'contain' }}
-                                />
-                            </View>
-                            <Text style={styles.shopLabel}>Shopname</Text>
-                            <View style={styles.ratingsContainer}>
-                                <Image source={assets.icon.star} style={{ width: 16, height: 16 }} />
-                            </View>
-                        </View>
-                    </ScrollView>
+                    <FavouriteShop />
                 </ScrollView>
             </LinearGradient>
         </View>

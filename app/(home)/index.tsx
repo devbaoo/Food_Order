@@ -1,9 +1,13 @@
+import { getAllUserInfos } from "@/api/modules/user";
 import assets from "@/assets";
 import Banner from "@/components/banner";
 import Modal from "@/components/modal";
+import CartModal from "@/components/modal/cart";
 import HomeCategory from "@/components/ui/home/home/category";
 import HomeHeader from "@/components/ui/home/home/header";
 import HomeReview from "@/components/ui/home/home/review";
+import { useAuth } from "@/providers/AuthenticatedProvider";
+import { Info } from "@/types";
 import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
@@ -18,22 +22,32 @@ export default () => {
         { id: 5, name: 'Vegetables', icon: assets.item.vegetable },
     ];
 
-    const reviews = [
-        { id: 1, name: 'User', rating: 5, image: assets.avatar.default_user },
-        { id: 2, name: 'User', rating: 5, image: assets.avatar.default_user },
-        { id: 3, name: 'User', rating: 5, image: assets.avatar.default_user },
-    ];
-
     const banners = [
         assets.banner.banner1,
         assets.banner.banner2,
         assets.banner.banner3
     ]
 
+    const [users, setUsers] = useState<Info[]>([]);
     const [showAds, setShowAds] = useState<boolean>(false);
+    const { cart, user } = useAuth();
+
+    const onLoad = async () => {
+        try {
+            if(user)
+            {
+                const users = await getAllUserInfos(user.uid);
+                setUsers(users);
+            }
+        }
+        finally {
+
+        }
+    }
 
     useEffect(() => {
         setShowAds(true);
+        onLoad();
     }, []);
 
     return (
@@ -57,7 +71,7 @@ export default () => {
                     <HomeCategory categories={categories} />
 
                     {/* Reviews Section */}
-                    <HomeReview reviews={reviews} />
+                    <HomeReview reviews={users} />
                 </ScrollView>
             </LinearGradient>
 
@@ -69,11 +83,14 @@ export default () => {
                     top: screen.height / 3.5,
                     right: -screen.width / 10,
                 }}
+                containerStyle={{ zIndex: 3 }}
                 visible={showAds}
                 onCancel={() => setShowAds(false)}
             >
                 <Image source={assets.ads.home_ads} style={{ height: screen.height / 4.23, resizeMode: 'contain' }} />
             </Modal>
+
+            {cart && cart.cartItems.length > 0 && <CartModal cart={cart} />}
         </View>
     );
 }

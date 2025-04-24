@@ -67,6 +67,7 @@ import woman from '@/assets/images/gender/woman.png';
 import man from '@/assets/images/gender/man.png';
 
 import home_ads from '@/assets/images/ads/home-ads.png';
+import favourite_ads from '@/assets/images/ads/favorite-ads.png';
 
 export default {
     splash,
@@ -152,6 +153,7 @@ export default {
     },
 
     ads: {
-        home_ads
+        home_ads,
+        favourite_ads
     }
 }
