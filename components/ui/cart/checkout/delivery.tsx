@@ -1,8 +1,10 @@
 import assets from "@/assets";
 import Icon from "@/components/icon";
+import React from "react";
 import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
 
 const CheckoutDelivery = () => {
+    
     return (
         <View style={{ borderWidth: 1, borderColor: '#ECECEC', borderRadius: 10 }}>
             <TouchableOpacity style={styles.addNoteButton}>

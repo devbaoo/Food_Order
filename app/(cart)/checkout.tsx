@@ -5,10 +5,13 @@ import CheckoutHeader from "@/components/ui/cart/checkout/header";
 import CheckoutInfo from "@/components/ui/cart/checkout/info";
 import CheckoutPayment from "@/components/ui/cart/checkout/payment";
 import CheckoutSummary from "@/components/ui/cart/checkout/summary";
+import { useAuth } from "@/providers/AuthenticatedProvider";
 import React from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
 
 export default function CheckoutScreen() {
+    const { info, cart } = useAuth();
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -19,12 +22,12 @@ export default function CheckoutScreen() {
                 <CheckoutHeader />
 
                 {/* Info */}
-                <CheckoutInfo />
+                <CheckoutInfo info={info} />
 
                 <Text style={styles.title}>Address</Text>
 
                 {/* Address */}
-                <CheckoutAddress />
+                <CheckoutAddress info={info} />
 
                 <Text style={styles.title}>Have counpon?</Text>
 
@@ -39,7 +42,7 @@ export default function CheckoutScreen() {
                 <Text style={styles.title}>Order Summary (2 items)</Text>
 
                 {/* Summary */}
-                <CheckoutSummary />
+                <CheckoutSummary cart={cart} />
 
                 <Text style={styles.title}>Payment method</Text>
 

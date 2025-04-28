@@ -1,3 +1,4 @@
+import { getRecommendationByUserId } from "@/api/modules/category";
 import { getAllMealTimes } from "@/api/modules/mealTime";
 import { getAllRestaurants } from "@/api/modules/restaurant";
 import assets from "@/assets";
@@ -6,6 +7,8 @@ import BackgroundLoading from "@/components/loading/background";
 import Modal from "@/components/modal";
 import MenuCategory from "@/components/ui/home/menu/category";
 import MenuStore from "@/components/ui/home/menu/store";
+import { useDotLoader } from "@/hooks/useDotLoader";
+import { useAuth } from "@/providers/AuthenticatedProvider";
 import { MealTime, Restaurant } from "@/types";
 import screen from "@/utils/screen";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,10 +21,12 @@ export default function MenuScreen() {
     const [show, setShow] = useState<boolean>(false);
     const [secondShow, setSecondShow] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
+    const [recommandLoading, setRecommandLoading] = useState<boolean>(false);
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [mealTimes, setMealTimes] = useState<MealTime[]>([]);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const { user } = useAuth();
 
     const reset = () => {
         setShow(false);
@@ -44,6 +49,29 @@ export default function MenuScreen() {
         }
         finally {
             setLoading(false);
+            setTimeout(async () => await onLoadRecommandation(), 600);
+        }
+    }
+
+    const dotLoader = useDotLoader(3);
+
+    const onLoadRecommandation = async () => {
+        if (user) {
+            try {
+                setRecommandLoading(true);
+                const result = await getRecommendationByUserId(user?.uid);
+                if (result && result.length > 0) {
+                    setTimeout(() => router.push({
+                        pathname: '/(hint)/result',
+                        params: {
+                            data: JSON.stringify(result)
+                        }
+                    }), 1000);
+                }
+            }
+            finally {
+                setTimeout(() => setRecommandLoading(false), 1000);
+            }
         }
     }
 
@@ -152,6 +180,18 @@ export default function MenuScreen() {
                         onSelect={setSelectedCategory}
                     />
                 </LinearGradient>
+            </Modal>
+
+            <Modal
+                visible={recommandLoading}
+                containerStyle={{
+                    justifyContent: 'center'
+                }}
+                wrapperStyle={{ flex: 0 }}
+            >
+                <View style={{ paddingBlock: screen.height * 0.05, paddingHorizontal: screen.width * 0.05 }}>
+                    <Text style={{ fontSize: 48 }}>Customize your today’s dishes{dotLoader}</Text>
+                </View>
             </Modal>
 
             {loading && <BackgroundLoading />}

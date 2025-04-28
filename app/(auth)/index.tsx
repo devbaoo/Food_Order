@@ -47,7 +47,10 @@ export default () => {
             return {
                 id: docSnap.id,
                 name: docSnap.data()?.name ?? '',
-                avatar: docSnap.data()?.avatar ?? ''
+                avatar: docSnap.data()?.avatar ?? '',
+                phone: docSnap.data()?.phone ?? '',
+                address: docSnap.data()?.address ?? '',
+                provinceAddress: docSnap.data()?.provinceAddress ?? ''
             }; // Trả về dữ liệu document
         } else {
             return null;

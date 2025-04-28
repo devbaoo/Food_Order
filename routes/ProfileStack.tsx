@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import React from "react";
 
-const MenuStack = () => {
+const ProfileStack = () => {
     return (
         <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index"  />
@@ -9,4 +9,4 @@ const MenuStack = () => {
     );
 }
 
-export default MenuStack;
+export default ProfileStack;

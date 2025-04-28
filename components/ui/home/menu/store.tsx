@@ -6,7 +6,7 @@ import BackgroundLoading from "@/components/loading/background";
 import { Category, Restaurant } from "@/types";
 import screen from "@/utils/screen";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, TouchableOpacity, View, Image, Text, ScrollView } from "react-native";
 
 interface MenuStoreProps {
@@ -14,13 +14,15 @@ interface MenuStoreProps {
     selectedTime: string | null;
     selectedCategory: string | null;
     onSelect: (category: string) => void;
+    blockBack?: boolean | null;
 }
 
 const MenuStore: React.FC<MenuStoreProps> = ({ ...prosp }) => {
-    const { onClose, selectedTime, selectedCategory, onSelect } = prosp;
+    const { onClose, selectedTime, selectedCategory, onSelect, blockBack } = prosp;
     const [loading, setLoading] = useState<boolean>(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+    const scrollRef = useRef<ScrollView>(null);
 
     const onLoad = async () => {
         try {
@@ -41,26 +43,44 @@ const MenuStore: React.FC<MenuStoreProps> = ({ ...prosp }) => {
         onLoad();
     }, [selectedCategory, selectedTime]);
 
+    useEffect(() => {
+        if (scrollRef.current && selectedCategory) {
+          const index = categories.findIndex(item => item.id === selectedCategory);
+          if (index >= 0) {
+            const offset = (screen.width / 3.9 + 10) * index; // width + gap
+            scrollRef.current.scrollTo({ x: offset, animated: true });
+          }
+        }
+      }, [selectedCategory]);
+
     return (
         <>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 15, paddingTop: 20 }}>
-                {
-                    categories.map((item, index) => (
-                        <TouchableOpacity
-                            style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}
-                            onPress={() => onSelect(item.id)}
-                            key={index.toString()}
-                        >
-                            <Image source={{ uri: item.image }} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
-                            <Text>{item.name}</Text>
-                            <Icon icon={assets.icon.dropdown} size={16} />
-                            {
-                                selectedCategory !== item.id &&
-                                <View style={[StyleSheet.absoluteFill, { zIndex: 3, backgroundColor: 'rgba(0, 0, 0, 0.5)', borderRadius: 10 }]} />
-                            }
-                        </TouchableOpacity>
-                    ))
-                }
+                <ScrollView
+                    ref={scrollRef}
+                    horizontal
+                    contentContainerStyle={{ gap: 10, paddingHorizontal: 20 }}
+                    showsHorizontalScrollIndicator={false}
+                >
+                    {
+                        categories.map((item, index) => (
+                            <TouchableOpacity
+                                style={{ gap: 5, backgroundColor: 'white', padding: 5, borderRadius: 10 }}
+                                onPress={() => onSelect(item.id)}
+                                key={index.toString()}
+                                delayPressIn={100}
+                            >
+                                <Image source={{ uri: item.image }} style={{ width: screen.width / 3.9, height: screen.height / 6.38, borderRadius: 10 }} />
+                                <Text>{item.name}</Text>
+                                <Icon icon={assets.icon.dropdown} size={16} />
+                                {
+                                    selectedCategory !== item.id &&
+                                    <View style={[StyleSheet.absoluteFill, { zIndex: 3, backgroundColor: 'rgba(0, 0, 0, 0.5)', borderRadius: 10 }]} />
+                                }
+                            </TouchableOpacity>
+                        ))
+                    }
+                </ScrollView>
             </View>
 
             <View style={{ flex: 1, paddingHorizontal: 20, paddingBlock: 15 }}>
@@ -91,9 +111,13 @@ const MenuStore: React.FC<MenuStoreProps> = ({ ...prosp }) => {
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <Icon icon={assets.icon.chevron_left_2} width={50} height={20} />
-            </TouchableOpacity>
+            {
+                !blockBack && (
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                        <Icon icon={assets.icon.chevron_left_2} width={50} height={20} />
+                    </TouchableOpacity>
+                )
+            }
 
             {loading && <BackgroundLoading />}
         </>

@@ -1,6 +1,8 @@
+import { getUserRecommendations } from "@/api/modules/hint";
 import assets from "@/assets";
 import BackgroundLoading from "@/components/loading/background";
-import { Question } from "@/types";
+import { useAuth } from "@/providers/AuthenticatedProvider";
+import { Category, Question } from "@/types";
 import screen from "@/utils/screen";
 import { toast } from "@/utils/toast";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,6 +17,7 @@ export default function SelectionScreen() {
     const [selections, setSelections] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [questions, setQuestions] = useState<Question[]>([]);
+    const { user } = useAuth();
 
     const params = useLocalSearchParams();
 
@@ -31,7 +34,7 @@ export default function SelectionScreen() {
     }, []);
 
     useEffect(() => {
-        if (!params || !params.questions) {
+        if (!params || !params.questions || !params.gender) {
             toast.info("An error occured!", "Check again your server!");
             router.back();
             return;
@@ -43,7 +46,10 @@ export default function SelectionScreen() {
     const onSelectOption = (option: string) => {
 
         if (selections.length === questions.length - 1) {
-            setSelections(prev => [...prev.slice(0, screenIndex), option]);
+            setSelections(prev => {
+                const newSelections = [...prev.slice(0, screenIndex), option];
+                return [params.gender as string, ...newSelections];
+            });
             setLoading(true);
             return;
         }
@@ -92,10 +98,20 @@ export default function SelectionScreen() {
     };
 
     useEffect(() => {
-        if (loading) {
-            setTimeout(() => router.push('/(hint)/result'), 1000);
-        }
-    }, [loading]);
+        const fetchAndNavigate = async () => {
+            if (loading && user) {
+                const result: string[] = await getUserRecommendations(user.uid, selections);
+                setTimeout(() => router.push({
+                    pathname: '/(hint)/result',
+                    params: {
+                        data: JSON.stringify(result)
+                    }
+                }), 1000);
+            }
+        };
+    
+        fetchAndNavigate();
+    }, [loading, user]);
 
     return (
         <View style={styles.container}>
@@ -125,7 +141,7 @@ export default function SelectionScreen() {
                             <View style={styles.questionTextContainer}>
                                 <Text style={styles.questionText}>{questions[screenIndex]?.text}</Text>
                             </View>
-                            { questions.length > 0 && questions[screenIndex].options.map(option => (
+                            {questions.length > 0 && questions[screenIndex].options.map(option => (
                                 <TouchableOpacity
                                     key={option}
                                     onPress={() => onSelectOption(option)}

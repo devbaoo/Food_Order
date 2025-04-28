@@ -41,16 +41,17 @@ export default function GenderScreen() {
             }),
         ]).start();
 
-        setTimeout(async () => await onLoadQuestions(), 500);
+        setTimeout(async () => await onLoadQuestions(gender), 500);
     };
 
-    const onLoadQuestions = async () => {
+    const onLoadQuestions = async (gender: string) => {
         try {
             toast.loading();
             const questions = await getAllQuestions();
             router.push({
                 pathname: '/(hint)/selection', params: {
-                    questions: JSON.stringify(questions)
+                    questions: JSON.stringify(questions),
+                    gender
                 }
             });
             reset();

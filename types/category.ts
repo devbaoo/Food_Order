@@ -3,4 +3,6 @@ export interface Category {
     name: string;
     image: string;
     mealTimes: string[];
+    tags: string[];
+    genders: string[];
 }

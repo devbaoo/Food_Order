@@ -1,6 +1,7 @@
 import assets from "@/assets"
 import Icon from "@/components/icon"
 import { router } from "expo-router"
+import React from "react"
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native"
 
 const CheckoutHeader = () => {
