@@ -1,52 +1,104 @@
 import { firestore } from "@/lib/firebase-config";
-import { Category } from "@/types";
-import { collection, doc, getDocs, setDoc } from "@firebase/firestore";
+import { Category, Food } from "@/types";
+import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "@firebase/firestore";
 
-export async function getUserRecommendations(userId: string, userAnswers: string[]): Promise<string[]> {
+const saveRecommendations = async (userId: string, foods: Food[]) => {
+    const userRef = doc(firestore, "user_recommendations", userId);
+
     try {
-        // 1. Tính toán recommendation
+        // Lấy thông tin hiện tại của document người dùng (nếu có)
+        const userDoc = await getDoc(userRef);
 
-        // 1.1. Fetch tất cả các categories
-        const categoriesSnapshot = await getDocs(collection(firestore, "categories"));
+        if (userDoc.exists()) {
+            // Nếu document đã tồn tại, kiểm tra các món ăn đã recommend
+            const currentRecommendations = userDoc.data()?.recommendations || [];
 
-        const userTags = userAnswers; // Câu trả lời dạng tags từ người dùng
+            // Thêm các món ăn mới vào mảng recommendations nếu chưa tồn tại
+            foods.forEach((food) => {
+                const isAlreadyRecommended = currentRecommendations.some((rec: { id: string }) => rec.id === food.id);
+                if (!isAlreadyRecommended) {
+                    currentRecommendations.push(food);
+                }
+            });
 
-        const scoredCategories = categoriesSnapshot.docs.map(docSnap => {
-            const data = docSnap.data();
-            let score = 0;
+            // Cập nhật document với danh sách mới
+            await updateDoc(userRef, {
+                recommendations: currentRecommendations
+            });
+        } else {
+            // Nếu document chưa tồn tại, tạo mới và lưu danh sách món ăn
+            await setDoc(userRef, {
+                recommendations: foods,
+                createdAt: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        console.error("Error saving recommendations: ", error);
+    }
+};
 
-            // Cộng điểm theo tag match
-            score += data.tags.filter((tag: string) => userTags.includes(tag)).length;
+const fetchFoodDataByTags = async (tags: string[]): Promise<Food[]> => {
+    try {
+        const foodRef = collection(firestore, "foods");
 
-            // Cộng thêm 1 điểm nếu gender match
-            if (data.genders && data.genders.includes(userAnswers[0])) {
-                score += 1;
-            }
+        // Danh sách các thực phẩm phù hợp
+        let matchingFoods: Food[] = [];
 
-            return { id: docSnap.id, score };
+        // Lặp qua từng tag trong mảng tags và thực hiện truy vấn
+        for (const tag of tags) {
+            const foodQuery = query(foodRef, where("tag", "==", tag)); // Truy vấn theo từng tag
+            const querySnapshot = await getDocs(foodQuery);
+
+            // Nếu truy vấn có kết quả, thêm vào danh sách thực phẩm
+            querySnapshot.docs.forEach((doc) => {
+                const foodData = doc.data() as Food;
+                const foodItem = {
+                    id: doc.id,
+                    name: foodData.name ?? "",
+                    image: foodData.image ?? "",
+                    restaurant: foodData.restaurant ?? "",
+                    price: foodData.price ?? 0,
+                };
+
+                // Kiểm tra xem thực phẩm này đã có trong danh sách chưa
+                if (!matchingFoods.find(food => food.id === foodItem.id)) {
+                    matchingFoods.push(foodItem);
+                }
+            });
+        }
+
+        return matchingFoods;
+    } catch (error) {
+        console.error("Error fetching food data from Firebase:", error);
+        return [];
+    }
+};
+
+export async function getResultFromAI(userId: string, selections: string[]): Promise<Food[]> {
+    try {
+        const response = await fetch('https://foodorderk16.somee.com/api/Recommendation/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                diet: selections[1],
+                allergies: selections[2],
+                flavors: selections[3],
+                cuisine: selections[4],
+            }),
         });
 
-        // Sort giảm dần theo điểm
-        const sortedCategories = scoredCategories.sort((a, b) => b.score - a.score);
+        const data = await response.json();
 
-        // Lấy 5 cái tốt nhất
-        const top5Categories = sortedCategories.slice(0, 5);
-
-        const recommendedCategories: string[] = top5Categories.map(cat => cat.id);
-
-        // 2. Lưu recommendation vào Firestore
-        const newReco = {
-            categories: recommendedCategories,
-            createdAt: new Date()
-        };
-
-        await setDoc(doc(firestore, "user_recommendations", userId), newReco, { merge: true });
-
-        console.log('Recommendation calculated and saved');
-
-        // 3. Trả về cho user
-        return recommendedCategories;
-
+        if (response.ok) {
+            const recommendations = await fetchFoodDataByTags(data.suggestedFoods);
+            if(recommendations.length > 0) {
+                await saveRecommendations(userId, recommendations); // Lưu vào Firestore
+            }
+            return recommendations;
+        }
+        return [];
     } catch (error) {
         console.error('Failed to get user recommendation', error);
         throw error;

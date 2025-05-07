@@ -60,7 +60,7 @@ export async function getRecommendationByUserId(userId: string) {
 
         if (recoDocSnap.exists()) {
             const recommendation = recoDocSnap.data();
-            return recommendation.categories; // Hoặc return nguyên recommendation nếu muốn
+            return recommendation.recommendations; // Hoặc return nguyên recommendation nếu muốn
         } else {
             return null; // Không có recommendation cho user này
         }

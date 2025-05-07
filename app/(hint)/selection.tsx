@@ -1,8 +1,8 @@
-import { getUserRecommendations } from "@/api/modules/hint";
+import { getResultFromAI } from "@/api/modules/hint";
 import assets from "@/assets";
 import BackgroundLoading from "@/components/loading/background";
 import { useAuth } from "@/providers/AuthenticatedProvider";
-import { Category, Question } from "@/types";
+import { Category, Food, Question } from "@/types";
 import screen from "@/utils/screen";
 import { toast } from "@/utils/toast";
 import { LinearGradient } from "expo-linear-gradient";
@@ -100,7 +100,7 @@ export default function SelectionScreen() {
     useEffect(() => {
         const fetchAndNavigate = async () => {
             if (loading && user) {
-                const result: string[] = await getUserRecommendations(user.uid, selections);
+                const result: Food[] = await getResultFromAI(user.uid, selections);
                 setTimeout(() => router.push({
                     pathname: '/(hint)/result',
                     params: {
@@ -109,9 +109,11 @@ export default function SelectionScreen() {
                 }), 1000);
             }
         };
-    
+
         fetchAndNavigate();
     }, [loading, user]);
+
+    
 
     return (
         <View style={styles.container}>
