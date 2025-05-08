@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import Animated, {
     Extrapolation,
@@ -7,12 +7,14 @@ import Animated, {
     useAnimatedScrollHandler,
     useAnimatedStyle,
     useSharedValue,
+    runOnJS,
 } from "react-native-reanimated";
 import screen from "@/utils/screen";
 
 // Updated measurements with minimal separation
 const ITEM_WIDTH = screen.width * 0.85;
 const ITEM_SPACING = -15; // Negative spacing to create overlap between items
+const VISIBLE_ITEMS = 3; // How many items are visible at once
 
 interface BannerProps {
     items: any[];
@@ -27,43 +29,31 @@ const SliderItem = ({
     index: number;
     scrollX: SharedValue<number>;
 }) => {
-    const inputRange = [
-        (index - 1) * (ITEM_WIDTH + ITEM_SPACING),
-        index * (ITEM_WIDTH + ITEM_SPACING),
-        (index + 1) * (ITEM_WIDTH + ITEM_SPACING),
-    ];
-
+    const position = (ITEM_WIDTH + ITEM_SPACING) * index;
+    
     const rnAnimatedStyle = useAnimatedStyle(() => {
+        // Calculate distance from center
+        const distanceFromCenter = position - scrollX.value;
+        const screenCenter = screen.width / 2;
+        const itemCenter = ITEM_WIDTH / 2;
+        const distanceRatio = Math.min(Math.abs(distanceFromCenter / (screenCenter - itemCenter)), 1);
+        
+        // Use simpler calculations that are less likely to cause issues
+        const scale = 1 - 0.15 * distanceRatio;
+        const opacity = 1 - 0.3 * distanceRatio;
+        const zIndex = 10 - 10 * distanceRatio;
+        
         return {
             width: ITEM_WIDTH,
-            marginRight: ITEM_SPACING, // This creates the overlap effect
-            transform: [
-                {
-                    scale: interpolate(
-                        scrollX.value,
-                        inputRange,
-                        [0.85, 1, 0.85],
-                        Extrapolation.CLAMP
-                    ),
-                },
-            ],
-            opacity: interpolate(
-                scrollX.value,
-                inputRange,
-                [0.7, 1, 0.7],
-                Extrapolation.CLAMP
-            ),
-            zIndex: interpolate(
-                scrollX.value,
-                inputRange,
-                [0, 10, 0],
-                Extrapolation.CLAMP
-            ), // Higher z-index for center item
+            marginRight: ITEM_SPACING,
+            transform: [{ scale }],
+            opacity,
+            zIndex,
         };
     });
 
     return (
-        <Animated.View style={[rnAnimatedStyle]}>
+        <Animated.View style={[styles.itemContainer, rnAnimatedStyle]}>
             <Image source={item} style={styles.cardImage} />
         </Animated.View>
     );
@@ -71,34 +61,53 @@ const SliderItem = ({
 
 const Banner: React.FC<BannerProps> = ({ items }) => {
     const scrollX = useSharedValue(0);
+    const flatListRef = React.useRef(null);
 
+    // Create a safe handler that avoids common animation crashes
     const onScrollHandler = useAnimatedScrollHandler({
-        onScroll: (e) => {
-            scrollX.value = e.contentOffset.x;
+        onScroll: (event) => {
+            scrollX.value = event.contentOffset.x;
         },
     });
 
-    // Calculate the visible width of side items
+    // Determine proper padding to show sides of adjacent items
     const sideItemVisible = (screen.width - ITEM_WIDTH) / 2;
+    
+    // Create dummy items to prevent crashes when scrolling to edges
+    const extendedItems = React.useMemo(() => {
+        if (items.length < 3) return items;
+        return items;
+    }, [items]);
     
     return (
         <View style={styles.container}>
             <Animated.FlatList
-                data={items}
+                ref={flatListRef}
+                data={extendedItems}
                 horizontal
+                pagingEnabled={false}
                 showsHorizontalScrollIndicator={false}
                 snapToInterval={ITEM_WIDTH + ITEM_SPACING}
-                decelerationRate={0.8}
+                decelerationRate="fast"
                 bounces={false}
                 contentContainerStyle={{
                     paddingHorizontal: sideItemVisible,
                 }}
                 renderItem={({ item, index }) => (
-                    <SliderItem item={item} index={index} scrollX={scrollX} />
+                    <SliderItem 
+                        item={item} 
+                        index={index} 
+                        scrollX={scrollX} 
+                    />
                 )}
                 keyExtractor={(_, index) => index.toString()}
                 onScroll={onScrollHandler}
                 scrollEventThrottle={16}
+                // Adding these props to improve stability
+                removeClippedSubviews={false}
+                initialNumToRender={extendedItems.length}
+                maxToRenderPerBatch={extendedItems.length}
+                windowSize={VISIBLE_ITEMS * 2 + 1}
             />
         </View>
     );
@@ -107,6 +116,10 @@ const Banner: React.FC<BannerProps> = ({ items }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    itemContainer: {
+        // Use absolute positioning instead of z-index for better performance
+        position: "relative",
     },
     cardImage: {
         width: ITEM_WIDTH,

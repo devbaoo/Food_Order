@@ -52,7 +52,6 @@ export default FavouriteShop;
 
 const styles = StyleSheet.create({
     shopCard: {
-        height: screen.height / 3.8,
         backgroundColor: '#f5f5f5',
         borderRadius: 10,
         padding: 10,

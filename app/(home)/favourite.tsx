@@ -37,7 +37,7 @@ export default function FavouriteScreen() {
                             <View style={styles.logoContainer}>
                                 <Image
                                     source={assets.shop.shop1}
-                                    style={[{ width: 160, height: 174 }]}
+                                    style={[{ width: screen.width / 2.6875, height: screen.height / 5.39 }]}
                                 />
                             </View>
                             <Text style={styles.shopLabel}>Shop</Text>
@@ -52,7 +52,7 @@ export default function FavouriteScreen() {
                             <View style={styles.logoContainer}>
                                 <Image
                                     source={assets.shop.shop2}
-                                    style={{ width: 160, height: 174 }}
+                                    style={{ width: screen.width / 2.6875, height: screen.height / 5.39 }}
                                 />
                             </View>
                             <Text style={styles.shopLabel}>Shop</Text>
@@ -67,7 +67,7 @@ export default function FavouriteScreen() {
                             <View style={styles.logoContainer}>
                                 <Image
                                     source={assets.shop.shop2}
-                                    style={{ width: 160, height: 174 }}
+                                    style={{ width: screen.width / 2.6875, height: screen.height / 5.39 }}
                                 />
                             </View>
                             <Text style={styles.shopLabel}>Shop</Text>
@@ -140,7 +140,6 @@ const styles = StyleSheet.create({
         color: '#00BCD4',
     },
     shopCard: {
-        height: screen.height / 3.8,
         backgroundColor: '#f5f5f5',
         borderRadius: 10,
         padding: 10,

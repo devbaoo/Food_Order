@@ -255,8 +255,8 @@ const styles = StyleSheet.create({
         marginBottom: 10
     },
     mealTimeImage: {
-        width: '100%',
-        height: 147,
+        width: screen.width * 0.3,
+        height: screen.width * 0.3,
         borderTopLeftRadius: 10,
         borderTopRightRadius: 10,
         borderRadius: 10

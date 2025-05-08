@@ -81,7 +81,10 @@ export default () => {
                     flex: 0,
                     position: 'absolute',
                     top: screen.height / 3.5,
-                    right: -screen.width / 10,
+                    width: '100%',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center'
                 }}
                 containerStyle={{ zIndex: 3 }}
                 visible={showAds}

@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         borderRadius: 16,
         overflow: 'hidden',
-        height: screen.height / 8,
+        height: screen.height / 6,
     },
     foodImage: {
         width: screen.width * 0.3,

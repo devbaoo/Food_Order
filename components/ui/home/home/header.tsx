@@ -1,6 +1,7 @@
 import assets from "@/assets";
 import { Feather, MaterialIcons } from "@expo/vector-icons"
 import { router } from "expo-router";
+import React from "react";
 import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native"
 
 const HomeHeader = () => {
