@@ -1,20 +1,29 @@
 import assets from "@/assets";
 import { auth } from "@/lib/firebase-config";
+import { createUserProfile } from "@/api/modules/user";
 import screen from "@/utils/screen";
 import { toast } from "@/utils/toast";
 import { LinearGradient } from "expo-linear-gradient";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { Image, TextInput, TouchableOpacity, View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [errorState, setErrorState] = useState<string | null>(null);
 
-    const handleLogin = async () => {
+    const handleRegister = async () => {
+        // Validate input
+        if (!name) {
+            toast.error("Lỗi", "Tên không được để trống");
+            return;
+        }
+
         if (!email) {
             toast.error("Lỗi", "Email không được để trống");
             return;
@@ -31,12 +40,36 @@ export default function LoginScreen() {
             return;
         }
 
+        if (password !== confirmPassword) {
+            toast.error("Lỗi", "Mật khẩu xác nhận không khớp");
+            return;
+        }
+
         setLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            // Create user with email and password
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Create user profile in Firestore using the API function
+            const success = await createUserProfile(user.uid, {
+                name,
+                email
+            });
+
+            if (success) {
+                toast.success("Thành công", "Đăng ký tài khoản thành công!");
+                router.replace("/(auth)/login" as any);
+            } else {
+                toast.error("Lỗi", "Đã xảy ra lỗi khi tạo hồ sơ người dùng");
+            }
         } catch (error: any) {
             setErrorState(error.message);
-            toast.error("Lỗi đăng nhập", "Vui lòng kiểm tra lại thông tin đăng nhập.");
+            if (error.code === 'auth/email-already-in-use') {
+                toast.error("Lỗi đăng ký", "Email đã được sử dụng.");
+            } else {
+                toast.error("Lỗi đăng ký", "Đã xảy ra lỗi khi đăng ký.");
+            }
         } finally {
             setLoading(false);
         }
@@ -52,6 +85,13 @@ export default function LoginScreen() {
             <Image source={assets.logo} style={styles.logo} />
             <View style={styles.form}>
                 <TextInput
+                    placeholder="Họ tên"
+                    style={styles.input}
+                    placeholderTextColor="black"
+                    value={name}
+                    onChangeText={setName}
+                />
+                <TextInput
                     placeholder="Email"
                     style={styles.input}
                     placeholderTextColor="black"
@@ -60,36 +100,40 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     keyboardType="email-address"
                 />
-                <View style={styles.passwordInputContainer}>
-                    <TextInput
-                        placeholder="Password"
-                        secureTextEntry={true}
-                        style={styles.input}
-                        placeholderTextColor="black"
-                        value={password}
-                        onChangeText={setPassword}
-                    />
-                </View>
-                <TouchableOpacity style={styles.forgotButton}>
-                    <Text>Forgot password?</Text>
-                </TouchableOpacity>
+                <TextInput
+                    placeholder="Mật khẩu"
+                    secureTextEntry={true}
+                    style={styles.input}
+                    placeholderTextColor="black"
+                    value={password}
+                    onChangeText={setPassword}
+                />
+                <TextInput
+                    placeholder="Xác nhận mật khẩu"
+                    secureTextEntry={true}
+                    style={styles.input}
+                    placeholderTextColor="black"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                />
+
                 <TouchableOpacity
                     style={styles.submit}
-                    onPress={handleLogin}
+                    onPress={handleRegister}
                     disabled={loading}
                 >
                     {loading ? (
                         <ActivityIndicator color="#005457" />
                     ) : (
-                        <Text style={styles.submitText}>Log in</Text>
+                        <Text style={styles.submitText}>Đăng ký</Text>
                     )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={styles.registerLink}
-                    onPress={() => router.push("/(auth)/register" as any)}
+                    style={styles.loginLink}
+                    onPress={() => router.push("/(auth)/login" as any)}
                 >
-                    <Text style={styles.registerLinkText}>Chưa có tài khoản? Đăng ký</Text>
+                    <Text style={styles.loginLinkText}>Đã có tài khoản? Đăng nhập</Text>
                 </TouchableOpacity>
             </View>
         </LinearGradient>
@@ -122,18 +166,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20
     },
 
-    passwordInputContainer: {
-        position: 'relative'
-    },
-
-    forgotButton: {
-        alignSelf: 'flex-end'
-    },
-
     submit: {
         paddingBlock: 12,
         borderRadius: 40,
-        backgroundColor: '#00C0E2'
+        backgroundColor: '#00C0E2',
+        marginTop: 10
     },
 
     submitText: {
@@ -142,13 +179,13 @@ const styles = StyleSheet.create({
         color: '#005457'
     },
 
-    registerLink: {
+    loginLink: {
         marginTop: 15,
         alignItems: 'center'
     },
 
-    registerLinkText: {
+    loginLinkText: {
         color: 'white',
         fontSize: 16
     }
-})
+}) 
