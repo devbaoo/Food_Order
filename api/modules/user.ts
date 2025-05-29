@@ -1,6 +1,13 @@
 import { firestore } from "@/lib/firebase-config";
 import { Info } from "@/types";
-import { collection, doc, getDocs, query, setDoc, where } from "@firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from "@firebase/firestore";
 
 export const getAllUserInfos = async (excludeUserId: string) => {
   try {
@@ -11,11 +18,11 @@ export const getAllUserInfos = async (excludeUserId: string) => {
       if (doc.id !== excludeUserId) {
         userInfos.push({
           id: doc.id,
-          name: doc.data()?.name ?? '',
-          avatar: doc.data()?.avatar ?? '',
-          phone: doc.data()?.phone ?? '',
-          address: doc.data()?.address ?? '',
-          provinceAddress: doc.data()?.provinceAddress ?? ''
+          name: doc.data()?.name ?? "",
+          avatar: doc.data()?.avatar ?? "",
+          phone: doc.data()?.phone ?? "",
+          address: doc.data()?.address ?? "",
+          provinceAddress: doc.data()?.provinceAddress ?? "",
         });
       }
     });
@@ -28,7 +35,34 @@ export const getAllUserInfos = async (excludeUserId: string) => {
 };
 
 export const updateUser = async (data: Info) => {
-  return await setDoc(doc(firestore, 'users', data.id), {
-    ...data
+  return await setDoc(doc(firestore, "users", data.id), {
+    ...data,
   });
-}
+};
+
+export const createUserProfile = async (
+  userId: string,
+  userData: {
+    name: string;
+    email: string;
+    avatar?: string;
+    phone?: string;
+    address?: string;
+    provinceAddress?: string;
+  }
+) => {
+  try {
+    await setDoc(doc(firestore, "users", userId), {
+      name: userData.name,
+      email: userData.email,
+      avatar: userData.avatar || "",
+      phone: userData.phone || "",
+      address: userData.address || "",
+      provinceAddress: userData.provinceAddress || "",
+    });
+    return true;
+  } catch (error) {
+    console.error("Lỗi khi tạo profile người dùng: ", error);
+    return false;
+  }
+};
