@@ -19,7 +19,7 @@ interface CartModalProps {
 const CartModal: React.FC<CartModalProps> = ({ ...props }) => {
     const { cart } = props;
     const [expanded, setExpanded] = useState(false);
-    const [shouldSyncCart, setShouldSyncCart] = useState<boolean>(false);
+    const [syncCounter, setSyncCounter] = useState<number>(0);
     const progress = useSharedValue(0);
     const [foods, setFoods] = useState<Food[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -39,7 +39,7 @@ const CartModal: React.FC<CartModalProps> = ({ ...props }) => {
         onLoad();
     }, []);
 
-    const updateCart = async () => {
+    const updateCart = async (cart: Cart) => {
         setLoading(true);
         try {
             if (cart) {
@@ -150,13 +150,6 @@ const CartModal: React.FC<CartModalProps> = ({ ...props }) => {
         };
     });
 
-    useEffect(() => {
-        if (shouldSyncCart) {
-            updateCart();
-            setShouldSyncCart(false); // reset
-        }
-    }, [shouldSyncCart]);
-
     return (
         <View style={styles.container}>
             {/* Animated bottom container */}
@@ -224,12 +217,14 @@ const CartModal: React.FC<CartModalProps> = ({ ...props }) => {
                                     <View style={styles.quantityControl}>
                                         <TouchableOpacity
                                             style={styles.quantityButton}
-                                            onPress={() => {
+                                            onPress={async () => {
                                                 const food = foods.find(x => x.id === item.foodId);
-                                                if (food) {
-                                                    setCart(prevCart => prevCart ? calculateCart(prevCart, food, 'remove') : null);
-                                                    setShouldSyncCart(true);
+                                                if (food && cart) {
+                                                    var cartToUpdate = calculateCart(cart, food, 'remove');
+                                                    setCart(cartToUpdate);
+                                                    await updateCart(cartToUpdate)
                                                 }
+                                                else setCart(null)
                                             }}
                                             disabled={loading}
                                         >
@@ -238,12 +233,14 @@ const CartModal: React.FC<CartModalProps> = ({ ...props }) => {
                                         <Text style={styles.quantity}>{item.quantity}</Text>
                                         <TouchableOpacity
                                             style={styles.quantityButton}
-                                            onPress={() => {
+                                            onPress={async () => {
                                                 const food = foods.find(x => x.id === item.foodId);
-                                                if (food) {
-                                                    setCart(prevCart => prevCart ? calculateCart(prevCart, food, 'add') : null);
-                                                    setShouldSyncCart(true);
+                                                if (food && cart) {
+                                                    var cartToUpdate = calculateCart(cart, food, 'add');
+                                                    setCart(cartToUpdate);
+                                                    await updateCart(cartToUpdate);
                                                 }
+                                                else setCart(null);
                                             }}
                                             disabled={loading}
                                         >

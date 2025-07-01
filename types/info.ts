@@ -1,3 +1,5 @@
+import { GeoPoint } from "@firebase/firestore";
+
 export interface Info {
     id: string;
     name: string;
@@ -5,4 +7,6 @@ export interface Info {
     phone: string;
     address?: string;
     provinceAddress?: string;
+    role?: string;
+    location: GeoPoint;
 }

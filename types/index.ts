@@ -5,3 +5,4 @@ export * from './restaurant';
 export * from './food';
 export * from './cart';
 export * from './info';
+export * from './booking';

@@ -1,3 +1,4 @@
+import { createBookingsFromCart } from "@/api/modules/booking";
 import CheckoutAddress from "@/components/ui/cart/checkout/address";
 import CheckoutCounpon from "@/components/ui/cart/checkout/counpon";
 import CheckoutDelivery from "@/components/ui/cart/checkout/delivery";
@@ -6,11 +7,30 @@ import CheckoutInfo from "@/components/ui/cart/checkout/info";
 import CheckoutPayment from "@/components/ui/cart/checkout/payment";
 import CheckoutSummary from "@/components/ui/cart/checkout/summary";
 import { useAuth } from "@/providers/AuthenticatedProvider";
-import React from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { toast } from "@/utils/toast";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 
 export default function CheckoutScreen() {
-    const { info, cart } = useAuth();
+    const { info, cart, setCart } = useAuth();
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const handleSubmit = async () => {
+        setLoading(true);
+        try {
+            if (!cart) {
+                toast.error("Cart does not exists!");
+                return;
+            }
+            await createBookingsFromCart(cart);
+            setCart(null);
+            toast.success("Successful purchase");
+            router.replace('/(home)');
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <View style={styles.container}>
@@ -64,7 +84,8 @@ export default function CheckoutScreen() {
                 backgroundColor: 'white',
                 elevation: 19,
             }}>
-                <TouchableOpacity style={styles.submitButton}>
+                <TouchableOpacity style={styles.submitButton} disabled={loading} onPress={handleSubmit}>
+                    {loading && <ActivityIndicator color="white" size={24} />}
                     <Text style={{ color: 'white', fontSize: 16 }}>Place Order</Text>
                 </TouchableOpacity>
             </View>
@@ -90,6 +111,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 7,
-        paddingBlock: 15
+        paddingBlock: 15,
+        flexDirection: 'row',
+        gap: 10
     }
 })

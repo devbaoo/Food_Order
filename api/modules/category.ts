@@ -22,11 +22,7 @@ export const getAllCategories = async (time?: string | null) => {
         querySnapshot.forEach((doc) => {
             categories.push({
                 id: doc?.id ?? '',
-                name: doc.data()?.name ?? '',
-                image: doc.data()?.image ?? '',
-                mealTimes: doc.data()?.mealTimes ?? [],
-                tags: doc.data()?.tags ?? [],
-                genders: doc.data()?.genders ?? []
+                name: doc.data()?.name ?? ''
             });
         });
 

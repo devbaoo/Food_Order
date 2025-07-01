@@ -29,6 +29,17 @@ import unchecked from '@/assets/images/icons/unchecked.png';
 import checked from '@/assets/images/icons/checked.png';
 import cart_white from '@/assets/images/icons/cart-white.png';
 import chevron_left_2 from '@/assets/images/icons/chevron-left-2.png';
+import list from '@/assets/images/icons/list.png';
+import chart from '@/assets/images/icons/chart.png';
+import facebook from '@/assets/images/icons/facebook.png';
+import mail from '@/assets/images/icons/mail.png';
+import cloud from '@/assets/images/icons/cloud.png';
+import register_lock from '@/assets/images/icons/register-lock.png';
+import register_mail from '@/assets/images/icons/register-mail.png';
+import register_user from '@/assets/images/icons/register-user.png';
+import register_phone from '@/assets/images/icons/register-phone.png';
+import truck from '@/assets/images/icons/truck.png';
+import bag from '@/assets/images/icons/bag.png';
 
 import fruit from '@/assets/images/items/fruit.png';
 import beverage from '@/assets/images/items/beverage.png';
@@ -61,13 +72,19 @@ import bunrieucua from '@/assets/images/food/bunrieucua.png';
 import pho from '@/assets/images/food/pho.png';
 import nuoccam from '@/assets/images/food/nuoccam.png';
 
+import background from '@/assets/images/background/background.png';
 import background1 from '@/assets/images/background/background1.png';
+import background2 from '@/assets/images/background/background2.png';
+import background_full from '@/assets/images/background/background_full.png';
 
 import woman from '@/assets/images/gender/woman.png';
 import man from '@/assets/images/gender/man.png';
 
 import home_ads from '@/assets/images/ads/home-ads.png';
 import favourite_ads from '@/assets/images/ads/favorite-ads.png';
+
+import text from '@/assets/images/text/text.png';
+import text_en from '@/assets/images/text/text-en.png';
 
 export default {
     splash,
@@ -105,7 +122,18 @@ export default {
         unchecked,
         checked,
         cart_white,
-        chevron_left_2
+        chevron_left_2,
+        list,
+        chart,
+        facebook,
+        mail,
+        cloud,
+        register_lock,
+        register_mail,
+        register_user,
+        register_phone,
+        truck,
+        bag
     },
     item: {
         fruit,
@@ -144,7 +172,10 @@ export default {
     },
 
     background: {
-        background1
+        background,
+        background1,
+        background2,
+        background_full
     },
 
     gender: {
@@ -155,5 +186,10 @@ export default {
     ads: {
         home_ads,
         favourite_ads
+    },
+
+    text: {
+        text,
+        text_en
     }
 }

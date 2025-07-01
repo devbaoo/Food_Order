@@ -1,4 +1,4 @@
-import { Cart, Info } from '@/types';
+import { Cart, Info, Restaurant } from '@/types';
 import { User } from 'firebase/auth';
 import React, { useState, createContext, useContext } from 'react';
 
@@ -11,6 +11,8 @@ interface AuthenticatedContextProps {
   setCart: React.Dispatch<React.SetStateAction<Cart | null>>;
   isChecked: boolean;
   setIsChecked: React.Dispatch<React.SetStateAction<boolean>>;
+  restaurant: Restaurant | null;
+  setRestaurant: React.Dispatch<React.SetStateAction<Restaurant | null>>;
 }
 
 const AuthenticatedContext = createContext<AuthenticatedContextProps | undefined>(undefined);
@@ -23,10 +25,11 @@ export const AuthenticatedProvider: React.FC<AuthenticatedProviderProps> = ({ ch
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<Cart | null>(null);
   const [info, setInfo] = useState<Info | null>(null);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isChecked, setIsChecked] = useState(false);
 
   return (
-    <AuthenticatedContext.Provider value={{ user, setUser, cart, setCart, info, setInfo, isChecked, setIsChecked }}>
+    <AuthenticatedContext.Provider value={{ user, setUser, cart, setCart, info, setInfo, isChecked, setIsChecked, restaurant, setRestaurant }}>
       {children}
     </AuthenticatedContext.Provider>
   );

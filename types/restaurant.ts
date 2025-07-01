@@ -1,8 +1,14 @@
+import { GeoPoint } from "@firebase/firestore";
+import { Category } from "./category";
+
 export interface Restaurant {
     id: string;
     name: string;
-    image: string;
+    imageUrl: string;
     rating: number;
-    categories: string[];
-    mealTimes: string[];
+    ratingCount: number;
+    categories?: Category[];
+    address: string;
+    favourite: boolean;
+    location: GeoPoint;
 }

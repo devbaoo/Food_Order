@@ -161,12 +161,17 @@ export default function ResultScreen() {
                 <Animated.View style={[styles.header]}>
                     <TouchableOpacity
                         style={styles.backButton}
+                        onPress={() => router.back()}
+                    >
+                        <Icon icon={assets.icon.back || "chevron-left"} size={24} />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Food Results</Text>
+                    <TouchableOpacity
+                        style={styles.backButton}
                         onPress={() => router.replace("/(home)")}
                     >
                         <Icon icon={assets.icon.home_active || "chevron-left"} size={24} />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Food Results</Text>
-                    <View style={{ width: 24 }} />
                 </Animated.View>
 
                 {/* Title Section */}

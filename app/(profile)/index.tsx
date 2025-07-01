@@ -5,11 +5,13 @@ import { useAuth } from "@/providers/AuthenticatedProvider";
 import { Info } from "@/types";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, View, Text, TextInput, StyleSheet, ActivityIndicator } from "react-native";
 
 export default function ProfileScreen() {
     const { info, setInfo } = useAuth();
     const [loading, setLoading] = useState<boolean>(false);
+    const { t } = useTranslation();
 
     const [formData, setFormData] = useState({
         name: "",
@@ -71,22 +73,22 @@ export default function ProfileScreen() {
                     </View>
 
                     {/* Form Title */}
-                    <Text style={styles.title}>Confirm your billing address.</Text>
+                    <Text style={styles.title}>{t("app.confirm_your_billing_address")}</Text>
 
                     {/* Form Fields */}
                     <View style={styles.formContainer}>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Full Name</Text>
+                            <Text style={styles.label}>{t("app.fullname")}</Text>
                             <TextInput
                                 style={styles.input}
                                 value={formData.name}
                                 onChangeText={(text) => handleChange('name', text)}
-                                placeholder="Full Name"
+                                placeholder={t("app.fullname")}
                             />
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Phone</Text>
+                            <Text style={styles.label}>{t("app.phone")}</Text>
                             <View style={styles.phoneInputContainer}>
                                 <View style={styles.prefixContainer}>
                                     <Icon icon={assets.icon.plus} size={18} />
@@ -95,14 +97,14 @@ export default function ProfileScreen() {
                                     style={styles.phoneInput}
                                     value={formData.phone}
                                     onChangeText={(text) => handleChange('phone', text)}
-                                    placeholder="Phone number"
+                                    placeholder={t("app.phone")}
                                     keyboardType="phone-pad"
                                 />
                             </View>
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Address</Text>
+                            <Text style={styles.label}>{t("app.address")}</Text>
                             <TextInput
                                 style={styles.textArea}
                                 value={formData.address}
@@ -110,12 +112,12 @@ export default function ProfileScreen() {
                                 numberOfLines={4}
                                 textAlignVertical="top"
                                 onChangeText={(text) => handleChange('address', text)}
-                                placeholder="Address"
+                                placeholder={t("app.address")}
                             />
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Province Address</Text>
+                            <Text style={styles.label}>{t("app.province_address")}</Text>
                             <TextInput
                                 style={styles.textArea}
                                 value={formData.provinceAddress}
@@ -123,7 +125,7 @@ export default function ProfileScreen() {
                                 numberOfLines={4}
                                 textAlignVertical="top"
                                 onChangeText={(text) => handleChange('provinceAddress', text)}
-                                placeholder="Province Address"
+                                placeholder={t("app.province_address")}
                             />
                         </View>
                     </View>
@@ -131,7 +133,7 @@ export default function ProfileScreen() {
                     {/* Save Button */}
                     <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={loading}>
                         {loading && <ActivityIndicator color={"white"} />}
-                        <Text style={styles.saveButtonText}>Submit</Text>
+                        <Text style={styles.saveButtonText}>{t("app.submit")}</Text>
                     </TouchableOpacity>
                 </ScrollView>
             </KeyboardAvoidingView>

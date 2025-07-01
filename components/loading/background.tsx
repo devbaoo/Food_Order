@@ -25,7 +25,8 @@ const BackgroundLoading = () => {
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 15
+                gap: 15,
+                elevation: 4
             }, StyleSheet.absoluteFillObject]}
         >
             <Image source={assets.logo} style={{ height: screen.height / 7.7 }} resizeMode="contain" />

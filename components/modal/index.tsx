@@ -19,14 +19,14 @@ const Modal: React.FC<ModalProps> = ({ ...props }) => {
     useEffect(() => {
         if (visible) {
             Animated.timing(slideAnim, {
-                toValue: 0, // dịch lên khoảng này để container nằm 87%
+                toValue: 0,
                 duration: 300,
                 easing: Easing.out(Easing.ease),
-                useNativeDriver: false, // vì bạn dùng height/margin
+                useNativeDriver: false,
             }).start();
         } else {
             Animated.timing(slideAnim, {
-                toValue: screen.height, // trượt xuống
+                toValue: screen.height,
                 duration: 200,
                 easing: Easing.in(Easing.ease),
                 useNativeDriver: false,

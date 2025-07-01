@@ -3,6 +3,7 @@ import { Info } from "@/types";
 import {
   collection,
   doc,
+  GeoPoint,
   getDocs,
   query,
   setDoc,
@@ -23,6 +24,7 @@ export const getAllUserInfos = async (excludeUserId: string) => {
           phone: doc.data()?.phone ?? "",
           address: doc.data()?.address ?? "",
           provinceAddress: doc.data()?.provinceAddress ?? "",
+          location: doc.data()?.location ?? { latitude: 0, longitude: 0 }
         });
       }
     });
@@ -49,6 +51,7 @@ export const createUserProfile = async (
     phone?: string;
     address?: string;
     provinceAddress?: string;
+    role: string;
   }
 ) => {
   try {
@@ -59,6 +62,9 @@ export const createUserProfile = async (
       phone: userData.phone || "",
       address: userData.address || "",
       provinceAddress: userData.provinceAddress || "",
+      role: userData.role,
+      id: userId,
+      location: new GeoPoint(0, 0)
     });
     return true;
   } catch (error) {

@@ -1,9 +1,12 @@
 import assets from "@/assets";
 import { Tabs } from "expo-router";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Image } from "react-native";
 
 const AppStack: React.FC = () => {
+    const { t } = useTranslation();
+
     return (
         <Tabs screenOptions={{
             tabBarStyle: { height: 60, paddingHorizontal: 20, backgroundColor: 'white' },
@@ -16,14 +19,10 @@ const AppStack: React.FC = () => {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Home',
+                    title: t('app.food'),
                     tabBarIcon: ({ focused }) => (
                         <Image
-                            source={
-                                focused
-                                    ? assets.icon.home_active
-                                    : assets.icon.home
-                            }
+                            source={assets.icon.chart}
                             style={{ width: 23, height: 23 }}
                             resizeMode="contain"
                         />
@@ -31,16 +30,12 @@ const AppStack: React.FC = () => {
                 }}
             />
             <Tabs.Screen
-                name="favourite"
+                name="menu-ai"
                 options={{
-                    title: 'Favourite',
+                    title: t('app.menu_ai'),
                     tabBarIcon: ({ focused }) => (
                         <Image
-                            source={
-                                focused
-                                    ? assets.icon.favourite_active
-                                    : assets.icon.favourite
-                            }
+                            source={assets.icon.list}
                             style={{ width: 23, height: 23 }}
                             resizeMode="contain"
                         />
@@ -50,14 +45,10 @@ const AppStack: React.FC = () => {
             <Tabs.Screen
                 name="search"
                 options={{
-                    title: 'Search',
+                    title: t('app.search'),
                     tabBarIcon: ({ focused }) => (
                         <Image
-                            source={
-                                focused
-                                    ? assets.icon.search_active
-                                    : assets.icon.search
-                            }
+                            source={assets.icon.search}
                             style={{ width: 23, height: 23 }}
                             resizeMode="contain"
                         />
@@ -67,31 +58,10 @@ const AppStack: React.FC = () => {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: 'Profile',
+                    title: t('app.account'),
                     tabBarIcon: ({ focused }) => (
                         <Image
-                            source={
-                                focused
-                                    ? assets.icon.user_active
-                                    : assets.icon.user
-                            }
-                            style={{ width: 23, height: 23 }}
-                            resizeMode="contain"
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="menu"
-                options={{
-                    title: 'Menu',
-                    tabBarIcon: ({ focused }) => (
-                        <Image
-                            source={
-                                focused
-                                    ? assets.icon.menu_active
-                                    : assets.icon.menu
-                            }
+                            source={assets.icon.user}
                             style={{ width: 23, height: 23 }}
                             resizeMode="contain"
                         />

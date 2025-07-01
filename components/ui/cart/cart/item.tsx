@@ -1,21 +1,27 @@
+import { updateCartItem } from "@/api/modules/cart";
 import { getFoodById } from "@/api/modules/food";
-import assets from "@/assets";
-import Icon from "@/components/icon";
-import { CartItem as CartItemType, Food } from "@/types";
+import { CartItem as CartItemType, Food, Info } from "@/types";
+import { formatCurrency } from "@/utils/currency";
+import { toast } from "@/utils/toast";
+import { AntDesign } from "@expo/vector-icons";
+import { TFunction } from "i18next";
 import React from "react";
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Image, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 
 interface CartItemProps {
     item: CartItemType | null;
-    onAdd: (item: Food) => void;
-    onRemove: (item: Food) => void;
-    loading: boolean;
+    info: Info | null;
+    reload: () => void;
+    isReloading: boolean;
+    t: TFunction<"translation", undefined>
 }
 
 const CartItem: React.FC<CartItemProps> = ({ ...props }) => {
-    const { item, onAdd, onRemove, loading } = props;
+    const { item, info, reload, isReloading, t } = props;
     const [food, setFood] = useState<Food | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const onLoad = async (id: string) => {
         try {
@@ -23,7 +29,7 @@ const CartItem: React.FC<CartItemProps> = ({ ...props }) => {
             setFood(food);
         }
         finally {
-
+            setLoading(false);
         }
     }
 
@@ -31,24 +37,57 @@ const CartItem: React.FC<CartItemProps> = ({ ...props }) => {
         if (item) onLoad(item.foodId);
     }, [item]);
 
+    const updateQuantity = async (value: number) => {
+        if (!info || !item) {
+            toast.error(t("app.error"), t("app.something_went-wrong"));
+            return;
+        }
+        setIsUpdating(true);
+        await updateCartItem(info?.id, item?.foodId, value, food?.basePrice, food?.restaurantId);
+        setTimeout(() => {
+            setIsUpdating(false);
+            reload();
+        }, 100);
+    }
+
     return (
-        <View style={styles.cartItem}>
-            <Image
-                source={food ? { uri: food.image } : assets.food.pho}
-                style={styles.itemImage}
-            />
-            <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{food?.name}</Text>
-                <Text style={styles.itemPrice}>${food?.price}</Text>
-            </View>
-            <View style={styles.quantityControl}>
-                <TouchableOpacity onPress={() => food && onRemove(food)} disabled={loading}>
-                    <Icon icon={assets.icon.trash} size={18} />
-                </TouchableOpacity>
-                <Text style={styles.quantityText}>{item?.quantity ?? 0}</Text>
-                <TouchableOpacity onPress={() => food && onAdd(food)} disabled={loading}>
-                    <Icon icon={assets.icon.plus} size={18} />
-                </TouchableOpacity>
+        <View style={styles.orderItemContainer}>
+            <View style={styles.orderItemRow}>
+                <View style={styles.orderItemLeft}>
+                    {
+                        loading ?
+                            <View style={styles.orderItemImage} />
+                            :
+                            <Image source={{ uri: food?.imageUrl }} style={styles.orderItemImage} />
+                    }
+
+                    <View>
+                        <Text style={styles.orderItemName}>{food?.name ?? "Loading..."}</Text>
+                        <View style={styles.quantityControls}>
+                            <TouchableOpacity
+                                style={styles.quantityButton}
+                                onPress={() => updateQuantity(-1)}
+                                disabled={isUpdating}
+                            >
+                                <AntDesign name="minus" size={12} color="gray" />
+                            </TouchableOpacity>
+                            {
+                                isUpdating || isReloading ?
+                                    <ActivityIndicator size={16} color="red" />
+                                    :
+                                    <Text>{item?.quantity}</Text>
+                            }
+                            <TouchableOpacity
+                                style={styles.quantityButton}
+                                onPress={() => updateQuantity(1)}
+                                disabled={isUpdating}
+                            >
+                                <AntDesign name="plus" size={12} color="gray" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+                <Text style={styles.orderItemPrice}>{formatCurrency((item?.quantity ?? 0) * (item?.price ?? 0))}</Text>
             </View>
         </View>
     )
@@ -57,48 +96,53 @@ const CartItem: React.FC<CartItemProps> = ({ ...props }) => {
 export default CartItem;
 
 const styles = StyleSheet.create({
-    cartItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-        borderWidth: 1,
-        borderColor: 'rgba(0, 0, 0, 0.03)',
-        borderRadius: 10
-    },
-    itemImage: {
-        width: 114,
-        height: 114,
+    // Order item
+    orderItemContainer: {
+        backgroundColor: 'white',
+        marginHorizontal: 16,
+        marginTop: 16,
+        padding: 16,
         borderRadius: 8,
     },
-    itemDetails: {
-        flex: 1,
-        paddingHorizontal: 12,
-    },
-    itemName: {
-        fontSize: 16,
-        fontWeight: '600',
-        marginBottom: 4,
-    },
-    itemPrice: {
-        fontSize: 14,
-    },
-    quantityControl: {
+    orderItemRow: {
         flexDirection: 'row',
-        alignSelf: 'flex-end',
         alignItems: 'center',
-        width: 100,
         justifyContent: 'space-between',
-        marginBottom: 20,
-        marginRight: 20,
-        borderRadius: 40,
-        borderWidth: 1,
-        borderColor: 'rgba(0, 0, 0, 0.08)',
-        paddingBlock: 8,
-        paddingHorizontal: 16
     },
-    quantityText: {
-        fontSize: 16,
+    orderItemLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    orderItemImage: {
+        width: 50,
+        height: 50,
+        backgroundColor: '#D1D5DB',
+        borderRadius: 4,
+        marginRight: 12,
+        alignItems: "center",
+        justifyContent: "center"
+    },
+    orderItemName: {
         fontWeight: '500',
+        marginBottom: 8
+    },
+    quantityControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10
+    },
+    quantityButton: {
+        width: 24,
+        height: 24,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    orderItemPrice: {
+        textAlign: 'right',
+        color: '#F97316',
+        fontWeight: '500',
+        marginTop: 8,
     },
 })
