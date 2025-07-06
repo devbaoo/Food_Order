@@ -47,7 +47,7 @@ const FavoritesScreen = () => {
     };
 
     const handleFindStoresPress = () => {
-        console.log('Find stores pressed');
+        router.push('/(home)/search');
     };
 
     return (
@@ -62,9 +62,9 @@ const FavoritesScreen = () => {
 
                 <TouchableOpacity onPress={handleNotificationPress} style={styles.notificationButton}>
                     <MaterialIcons name="notifications-none" size={24} color="#333" />
-                    <View style={styles.notificationBadge}>
+                    {/* <View style={styles.notificationBadge}>
                         <Text style={styles.badgeText}>1</Text>
-                    </View>
+                    </View> */}
                 </TouchableOpacity>
             </View>
 
@@ -79,14 +79,14 @@ const FavoritesScreen = () => {
                     </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={[styles.tab, activeTab === 'cua-hang' && styles.activeTab]}
                     onPress={() => setActiveTab('cua-hang')}
                 >
                     <Text style={[styles.tabText, activeTab === 'cua-hang' && styles.activeTabText]}>
                         {t("app.store")}
                     </Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             {/* Filter Buttons */}

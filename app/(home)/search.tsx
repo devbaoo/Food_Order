@@ -1,4 +1,8 @@
+import { getRestaurantsBySearchTerm } from '@/api/modules/restaurant';
+import { Restaurant } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import i18next from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,100 +15,33 @@ import {
     StyleSheet,
 } from 'react-native';
 
-// Mock restaurant data
-const mockRestaurants = [
-    {
-        id: 1,
-        name: 'The Golden Spoon',
-        cuisine: 'Italian',
-        rating: 4.8,
-        distance: '0.3 km',
-        deliveryTime: '25-35 min',
-        image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=250&fit=crop',
-        priceRange: '$$',
-        isOpen: true
-    },
-    {
-        id: 2,
-        name: 'Sakura Sushi',
-        cuisine: 'Japanese',
-        rating: 4.6,
-        distance: '0.8 km',
-        deliveryTime: '30-40 min',
-        image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=250&fit=crop',
-        priceRange: '$$$',
-        isOpen: true
-    },
-    {
-        id: 3,
-        name: 'Burger Palace',
-        cuisine: 'American',
-        rating: 4.4,
-        distance: '1.2 km',
-        deliveryTime: '20-30 min',
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=250&fit=crop',
-        priceRange: '$',
-        isOpen: false
-    },
-    {
-        id: 4,
-        name: 'Spice Garden',
-        cuisine: 'Indian',
-        rating: 4.7,
-        distance: '0.5 km',
-        deliveryTime: '35-45 min',
-        image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=250&fit=crop',
-        priceRange: '$$',
-        isOpen: true
-    },
-    {
-        id: 5,
-        name: 'Taco Fiesta',
-        cuisine: 'Mexican',
-        rating: 4.3,
-        distance: '0.7 km',
-        deliveryTime: '15-25 min',
-        image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=250&fit=crop',
-        priceRange: '$',
-        isOpen: true
-    },
-    {
-        id: 6,
-        name: 'Le Petit Bistro',
-        cuisine: 'French',
-        rating: 4.9,
-        distance: '1.5 km',
-        deliveryTime: '40-50 min',
-        image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=250&fit=crop',
-        priceRange: '$$$$',
-        isOpen: true
-    }
-];
-
 export default function RestaurantSearchScreen() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCuisine, setSelectedCuisine] = useState('All');
-    const [filteredRestaurants, setFilteredRestaurants] = useState(mockRestaurants);
+    const [loading, setLoading] = useState(true);
+    const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
     const { t } = useTranslation();
 
+    const onLoad = async () => {
+        try {
+            setLoading(true);
+            let restaurants = await getRestaurantsBySearchTerm(searchQuery);
+
+            // Filter by search query
+            if (searchQuery) {
+                restaurants = restaurants.filter(restaurant =>
+                    restaurant.name.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }
+
+            setFilteredRestaurants(restaurants);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
-        let filtered = mockRestaurants;
-
-        // Filter by search query
-        if (searchQuery) {
-            filtered = filtered.filter(restaurant =>
-                restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-
-        // Filter by cuisine
-        if (selectedCuisine !== 'All') {
-            filtered = filtered.filter(restaurant => restaurant.cuisine === selectedCuisine);
-        }
-
-        setFilteredRestaurants(filtered);
-    }, [searchQuery, selectedCuisine]);
+        onLoad();
+    }, [searchQuery]);
 
     const renderStars = (rating: number) => {
         const stars = [];
@@ -122,9 +59,9 @@ export default function RestaurantSearchScreen() {
         return stars;
     };
 
-    const RestaurantCard = ({ restaurant }: any) => (
-        <TouchableOpacity style={styles.restaurantCard}>
-            <Image source={{ uri: restaurant.image }} style={styles.restaurantImage} />
+    const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => (
+        <TouchableOpacity style={styles.restaurantCard} onPress={() => router.push({ pathname: '/(restaurant)', params: { id: restaurant.id } })}>
+            <Image source={{ uri: restaurant.imageUrl }} style={styles.restaurantImage} />
             <View style={styles.restaurantInfo}>
                 <View style={styles.restaurantHeader}>
                     <Text style={styles.restaurantName}>{restaurant.name}</Text>
@@ -132,26 +69,29 @@ export default function RestaurantSearchScreen() {
                         <View style={styles.starsContainer}>
                             {renderStars(restaurant.rating)}
                         </View>
-                        <Text style={styles.rating}>{restaurant.rating}</Text>
+                        <Text style={styles.rating}>{restaurant.rating.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        })}</Text>
                     </View>
                 </View>
 
-                <Text style={styles.cuisine}>{restaurant.cuisine} • {restaurant.priceRange}</Text>
+                <Text style={styles.cuisine}>{restaurant.address}</Text>
 
                 <View style={styles.restaurantDetails}>
                     <View style={styles.detailItem}>
                         <Ionicons name="map" size={14} color="#666" />
-                        <Text style={styles.detailText}>{restaurant.distance}</Text>
+                        <Text style={styles.detailText}>0.3km</Text>
                     </View>
 
                     <View style={styles.detailItem}>
                         <Ionicons name="calendar" size={14} color="#666" />
-                        <Text style={styles.detailText}>{restaurant.deliveryTime}</Text>
+                        <Text style={styles.detailText}>30 - 40p</Text>
                     </View>
 
-                    <View style={[styles.statusBadge, { backgroundColor: restaurant.isOpen ? '#E8F5E8' : '#FFF0F0' }]}>
-                        <Text style={[styles.statusText, { color: restaurant.isOpen ? '#22C55E' : '#EF4444' }]}>
-                            {restaurant.isOpen ? 'Open' : 'Closed'}
+                    <View style={[styles.statusBadge, { backgroundColor: '#E8F5E8' }]}>
+                        <Text style={[styles.statusText, { color: '#22C55E' }]}>
+                            Đang mở
                         </Text>
                     </View>
                 </View>
@@ -165,9 +105,9 @@ export default function RestaurantSearchScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>{t("app.search")}</Text>
-                <TouchableOpacity style={styles.filterButton}>
+                {/* <TouchableOpacity style={styles.filterButton}>
                     <Ionicons name="filter" size={20} color="#333" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             {/* Search Bar */}
@@ -176,7 +116,7 @@ export default function RestaurantSearchScreen() {
                     <Ionicons name="search" size={20} color="#666" />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder={t('app.search')}
+                        placeholder={t('app.search_restaurant')}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         placeholderTextColor="#999"
@@ -187,27 +127,34 @@ export default function RestaurantSearchScreen() {
             {/* Results Count */}
             <View style={styles.resultsHeader}>
                 <Text style={styles.resultsCount}>
-                    {filteredRestaurants.length} {t("app.restaurant")}{filteredRestaurants.length !== 1 ? 's' : ''} {t("app.found")}
+                    {filteredRestaurants.length} {t("app.restaurant")}{i18next.language === "en" && filteredRestaurants.length !== 1 ? 's' : ''} {t("app.found")}
                 </Text>
             </View>
 
             {/* Restaurant List */}
-            <ScrollView
-                style={styles.restaurantsList}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.restaurantsContent}
-            >
-                {filteredRestaurants.map((restaurant) => (
-                    <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-                ))}
-
-                {filteredRestaurants.length === 0 && (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyStateText}>{t("app.no_restaurant_found")}</Text>
-                        <Text style={styles.emptyStateSubtext}>{t("app.try_adjust")}</Text>
+            {
+                loading ?
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text>Đang tải...</Text>
                     </View>
-                )}
-            </ScrollView>
+                    :
+                    <ScrollView
+                        style={styles.restaurantsList}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.restaurantsContent}
+                    >
+                        {filteredRestaurants.map((restaurant) => (
+                            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+                        ))}
+
+                        {filteredRestaurants.length === 0 && (
+                            <View style={styles.emptyState}>
+                                <Text style={styles.emptyStateText}>{t("app.no_restaurant_found")}</Text>
+                                <Text style={styles.emptyStateSubtext}>{t("app.try_adjust")}</Text>
+                            </View>
+                        )}
+                    </ScrollView>
+            }
         </View>
     );
 }
@@ -215,7 +162,8 @@ export default function RestaurantSearchScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'white',
+        paddingTop: 12
     },
     header: {
         flexDirection: 'row',

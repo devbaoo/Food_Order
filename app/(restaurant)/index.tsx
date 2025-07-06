@@ -15,6 +15,10 @@ import { Food, Restaurant } from '@/types';
 import MenuSelection from '@/components/ui/restaurant/home/selection';
 import FoodOrderPageModal from '@/components/ui/restaurant/home/modal';
 import { useTranslation } from 'react-i18next';
+import screen from '@/utils/screen';
+import { useAuth } from '@/providers/AuthenticatedProvider';
+import * as Clipboard from 'expo-clipboard';
+import { toast } from '@/utils/toast';
 
 export default function RestaurantPage() {
     const [activeTab, setActiveTab] = useState({
@@ -25,10 +29,11 @@ export default function RestaurantPage() {
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const [visible, setVisible] = useState(false);
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
+    const { info } = useAuth();
     const { t } = useTranslation();
 
     const onLoad = async () => {
-        const restaurant = await getRestaurantById(params.id as string);
+        const restaurant = await getRestaurantById(params.id as string, info?.id);
 
         if (restaurant) {
             setRestaurant(restaurant);
@@ -37,6 +42,23 @@ export default function RestaurantPage() {
             }
         };
     }
+
+    const copyRestaurantToClipboard = () => {
+        if (restaurant) {
+            const content = `
+            🏠 ${restaurant.name}
+            ⭐ ${restaurant.rating} (${restaurant.ratingCount} ${restaurant.ratingCount === 1 ? 'đánh giá' : 'đánh giá'})
+            📍 ${restaurant.address}
+            🆔 ID: ${restaurant.id}
+        `;
+
+            Clipboard.setStringAsync(content);
+            toast.info(t('app.copied_to_clipboard'), t('app.restaurant_info_copied'));
+        }
+        else {
+            toast.error(t('app.error'), t('app.restaurant_not_found'));
+        }
+    };
 
     useEffect(() => {
         if (params && params.id) {
@@ -52,31 +74,40 @@ export default function RestaurantPage() {
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
                 <View style={styles.headerIcons}>
-                    <TouchableOpacity style={styles.headerIcon}>
+                    <TouchableOpacity style={styles.headerIcon} onPress={() => {
+                        if (!restaurant) {
+                            toast.error(t('app.error'), t('app.restaurant_not_found'));
+                            return;
+                        }
+                        router.push({
+                            pathname: '/(restaurant)/info',
+                            params: { restaurantSF: JSON.stringify(restaurant) }
+                        })
+                    }}>
                         <Ionicons name="information-circle-outline" size={24} color="#000" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.headerIcon}>
-                        <Ionicons name="heart-outline" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.headerIcon}>
+                    <TouchableOpacity style={styles.headerIcon} onPress={copyRestaurantToClipboard}>
                         <Ionicons name="share-outline" size={24} color="#000" />
                     </TouchableOpacity>
                 </View>
             </View>
 
-            <ScrollView style={styles.content}>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: screen.width * 0.05 }} showsVerticalScrollIndicator={false}>
                 {/* Restaurant Info */}
                 <View style={styles.restaurantInfo}>
                     <Image source={{ uri: restaurant?.imageUrl }} style={styles.restaurantImage} />
                     <Text style={styles.restaurantName}>{restaurant?.name}</Text>
                     <View style={styles.ratingContainer}>
-                        <View style={styles.stars}>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <Ionicons key={star} name="star" size={16} color="#FFD700" />
-                            ))}
-                        </View>
-                        <Text style={styles.rating}>{restaurant?.rating}</Text>
+                        <Text style={styles.rating}>{(restaurant?.rating ?? 0).toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        })}</Text>
                         <Text style={styles.ratingsCount}>({restaurant?.ratingCount} {t("app.rating")})</Text>
+                    </View>
+                    <View style={styles.stars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <Ionicons key={star} name="star" size={16} color="#FFD700" />
+                        ))}
                     </View>
                 </View>
 
@@ -203,7 +234,8 @@ const styles = StyleSheet.create({
     },
     restaurantInfo: {
         alignItems: 'center',
-        paddingVertical: 20,
+        paddingTop: 20,
+        paddingBottom: 10
     },
     restaurantImage: {
         width: 80,
@@ -221,6 +253,7 @@ const styles = StyleSheet.create({
     ratingContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: 10
     },
     stars: {
         flexDirection: 'row',

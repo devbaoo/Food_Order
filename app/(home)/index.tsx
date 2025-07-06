@@ -13,9 +13,9 @@ import screen from "@/utils/screen";
 import { toast } from "@/utils/toast";
 import { FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, View, StyleSheet, Image, Text, TouchableOpacity, TextInput, ImageBackground, RefreshControl } from "react-native";
+import { ScrollView, View, StyleSheet, Image, Text, TouchableOpacity, TextInput, ImageBackground, RefreshControl, findNodeHandle, UIManager } from "react-native";
 
 export default () => {
     const [searchText, setSearchText] = useState('');
@@ -25,24 +25,26 @@ export default () => {
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [loading, setLoading] = useState(true);
     const { info } = useAuth();
+    const scrollRef = useRef<ScrollView>(null);
+    const topQueriesRef = useRef<View>(null);
     const { t } = useTranslation();
 
     const navigationIcons = [
         { id: 'discount', icon: 'percent', label: t('app.discount'), type: 'MaterialIcons', path: '' },
-        { id: 'menu', icon: 'restaurant-menu', label: t('app.menu_ai'), type: 'MaterialIcons', path: '' },
-        { id: 'favorite', icon: 'star-outline', label: t('app.review'), type: 'Ionicons', path: '' },
+        { id: 'menu', icon: 'restaurant-menu', label: t('app.menu_ai'), type: 'MaterialIcons', path: '/(home)/menu-ai' },
+        { id: 'favorite', icon: 'star-outline', label: t('app.review'), type: 'Ionicons', path: '/(restaurant)/review' },
         { id: 'delivery', icon: 'delivery-dining', label: t('app.top_restaurant'), type: 'MaterialIcons', path: '' },
         { id: 'voucher', icon: 'local-offer', label: t('app.ordered_restaurant'), type: 'MaterialIcons', path: '/(restaurant)/currently-ordered' },
     ];
 
-    const quickActions = [
-        { id: 'morning', icon: 'wb-sunny', label: t('app.breakfast'), type: 'MaterialIcons' },
-        { id: 'drink', icon: 'local-cafe', label: t('app.drink'), type: 'MaterialIcons' },
-        { id: 'food', icon: 'restaurant', label: t('app.lunch'), type: 'MaterialIcons' },
-        { id: 'fast', icon: 'fastfood', label: t('app.fast_food'), type: 'MaterialIcons' },
-        { id: 'call', icon: 'phone', label: t('app.dinner'), type: 'MaterialIcons' },
-        { id: 'more', icon: 'apps', label: t('app.promotion'), type: 'MaterialIcons' },
-    ];
+    // const quickActions = [
+    //     { id: 'morning', icon: 'wb-sunny', label: t('app.breakfast'), type: 'MaterialIcons' },
+    //     { id: 'drink', icon: 'local-cafe', label: t('app.drink'), type: 'MaterialIcons' },
+    //     { id: 'food', icon: 'restaurant', label: t('app.lunch'), type: 'MaterialIcons' },
+    //     { id: 'fast', icon: 'fastfood', label: t('app.fast_food'), type: 'MaterialIcons' },
+    //     { id: 'call', icon: 'phone', label: t('app.dinner'), type: 'MaterialIcons' },
+    //     { id: 'more', icon: 'apps', label: t('app.promotion'), type: 'MaterialIcons' },
+    // ];
 
     const onLoad = async () => {
         setLoading(true);
@@ -86,9 +88,28 @@ export default () => {
         onLoad();
     }
 
+    const scrollToTopQueries = () => {
+        const scrollNode = findNodeHandle(scrollRef.current);
+        const targetNode = findNodeHandle(topQueriesRef.current);
+
+        if (scrollNode && targetNode) {
+            UIManager.measureLayout(
+                targetNode,
+                scrollNode,
+                () => {
+                    console.warn('measureLayout failed:');
+                },
+                (x, y) => {
+                    scrollRef.current?.scrollTo({ y: y - 20, animated: true });
+                }
+            );
+        }
+    };
+
     return (
         <ImageBackground source={assets.background.background} style={styles.container}>
             <ScrollView
+                ref={scrollRef}
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
@@ -106,11 +127,11 @@ export default () => {
                             <TouchableOpacity style={styles.headerIcon} onPress={() => router.push("/(cart)")}>
                                 <Ionicons name="cart-outline" size={24} color="white" />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.headerIcon}>
+                            <TouchableOpacity style={styles.headerIcon} onPress={() => router.push("/(notification)")}>
                                 <Ionicons name="notifications-outline" size={24} color="white" />
-                                <View style={styles.badge}>
+                                {/* <View style={styles.badge}>
                                     <Text style={styles.badgeText}>1</Text>
-                                </View>
+                                </View> */}
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -176,7 +197,9 @@ export default () => {
                                 key={item.id}
                                 style={styles.navItem}
                                 onPress={() => {
-                                    if (item.path) {
+                                    if (item.id === 'delivery') {
+                                        scrollToTopQueries();
+                                    } else if (item.path) {
                                         router.push(item.path as any);
                                     }
                                 }}
@@ -187,17 +210,17 @@ export default () => {
                         ))}
                     </View>
 
-                    <View style={{ width: '100%', height: 1, backgroundColor: '#ccc' }} />
+                    {/* <View style={{ width: '100%', height: 1, backgroundColor: '#ccc' }} /> */}
 
                     {/* Quick Actions */}
-                    <View style={styles.quickActionsGrid}>
+                    {/* <View style={styles.quickActionsGrid}>
                         {quickActions.map((item) => (
                             <TouchableOpacity key={item.id} style={styles.quickActionItem}>
                                 {renderIcon(item.icon, item.type, 24, '#333')}
                                 <Text style={styles.quickActionLabel}>{item.label}</Text>
                             </TouchableOpacity>
                         ))}
-                    </View>
+                    </View> */}
 
                     {/* Restaurant Section */}
                     <RestaurantSection
@@ -208,9 +231,6 @@ export default () => {
                     {/* Discount Section */}
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>{t("app.sale_20_%")}</Text>
-                        <TouchableOpacity>
-                            <MaterialCommunityIcons name="arrow-right-circle-outline" size={20} color="#666" />
-                        </TouchableOpacity>
                     </View>
 
                     {/* Featured Restaurant */}
@@ -236,24 +256,35 @@ export default () => {
                     </View>
 
                     {/* Top Queries */}
-                    <Text style={styles.sectionTitle}>{t("app.top_restaurant")}</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.topQueriesContainer}>
-                        {topQueries.map((query) => (
-                            <TouchableOpacity
-                                key={query.id}
-                                style={styles.topQueryItem}
-                                onPress={() => router.push({ pathname: '/(restaurant)', params: { id: query.id } })}
-                            >
-                                <Image source={{ uri: query.imageUrl }} style={styles.topQueryImage} />
-                                <Text style={styles.topQueryName}>{query.name}</Text>
-                                <Text style={styles.topQueryTime}>10 - 20 {t("app.minutes")}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
+                    <View ref={topQueriesRef} collapsable={false}>
+                        <Text style={styles.sectionTitle}>{t("app.top_restaurant")}</Text>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.topQueriesContainer}
+                        >
+                            {topQueries.map((query) => (
+                                <TouchableOpacity
+                                    key={query.id}
+                                    style={styles.topQueryItem}
+                                    onPress={() => router.push({ pathname: '/(restaurant)', params: { id: query.id } })}
+                                >
+                                    <Image source={{ uri: query.imageUrl }} style={styles.topQueryImage} />
+                                    <Text style={styles.topQueryName}>{query.name}</Text>
+                                    <Text style={styles.topQueryTime}>10 - 20 {t("app.minutes")}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
 
                     {/* Menu AI Section */}
-                    <TouchableOpacity style={styles.menuAISection}>
-                        <Text style={styles.menuAITitle}>{t("app.menu_ai")}</Text>
+                    <TouchableOpacity style={styles.menuAISection} onPress={() => router.push("/(menu-ai)/chat")}>
+                        <ImageBackground
+                            source={{ uri: 'https://decodingdatascience.com/wp-content/uploads/2023/07/Copy-of-Blue-Dynamic-Fashion-Special-Sale-Banner-1.png' }}
+                            style={{ width: '100%', height: 200, justifyContent: 'center', alignItems: 'center' }}
+                            imageStyle={{ borderRadius: 12 }}
+                        >
+                        </ImageBackground>
                     </TouchableOpacity>
 
                     {/* Nearby Restaurants */}
@@ -368,6 +399,7 @@ const styles = StyleSheet.create({
     navigationGrid: {
         flexDirection: 'row',
         paddingHorizontal: 16,
+        paddingBottom: 16
     },
     navItem: {
         flex: 1,
@@ -495,10 +527,8 @@ const styles = StyleSheet.create({
         color: '#666',
     },
     menuAISection: {
-        backgroundColor: '#7DD3C0',
         paddingHorizontal: 20,
-        paddingVertical: 50,
-        marginBlock: 15,
+        paddingVertical: 30,
         borderRadius: 12,
         alignItems: 'center',
     },
@@ -558,6 +588,4 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: '#333',
     },
-
-
 });

@@ -11,7 +11,7 @@ export const Popular = ({ t, cart }: { t: TFunction<"translation", undefined>, c
     const [foods, setFoods] = useState<Food[]>([]);
 
     const onLoad = async () => {
-        const foods = await getAllFoodsByRestaurantId(cart?.restaurantId ?? "");
+        const foods = await getAllFoodsByRestaurantId(cart?.restaurantId ?? "") ?? [];
         setFoods(foods.filter(food =>
             !cart?.cartItems.some(item => item.foodId === food.id)
         ));
@@ -35,7 +35,7 @@ export const Popular = ({ t, cart }: { t: TFunction<"translation", undefined>, c
                     >
                         {
                             foods.map((item, index) => (
-                                <View style={styles.addonItem}>
+                                <View style={styles.addonItem} key={index}>
                                     <View style={{ position: 'relative' }}>
                                         <Image source={{ uri: item.imageUrl }} style={styles.addonImage} />
                                         <TouchableOpacity style={{ position: 'absolute', bottom: 10, right: 5, backgroundColor: 'white', borderRadius: screen.width, padding: 5 }}>

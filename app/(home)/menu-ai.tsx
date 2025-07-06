@@ -8,8 +8,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { generatePromptFromPreferences } from '@/utils/text';
 
 export default function HealthSurveyForm() {
+    const { t } = useTranslation();
     const [currentStep, setCurrentStep] = useState(0);
     const [answers, setAnswers] = useState<any>({
         meals: [],
@@ -289,14 +292,14 @@ export default function HealthSurveyForm() {
             {
                 currentStep > 0 && (
                     <View style={styles.header}>
-                        <TouchableOpacity onPress={prevStep} disabled={currentStep === 0}>
+                        <TouchableOpacity onPress={() => router.replace("/(menu-ai)/chat")}>
                             <Ionicons
                                 name="arrow-back"
                                 size={24}
                                 color={currentStep === 0 ? "#ccc" : "#333"}
                             />
                         </TouchableOpacity>
-                        <Text style={styles.skip}>Bỏ qua</Text>
+                        <Text style={styles.skip}>{t("app.skip")}</Text>
                     </View>
                 )
             }
@@ -314,10 +317,13 @@ export default function HealthSurveyForm() {
             <View style={styles.buttonContainer}>
                 <TouchableOpacity
                     style={styles.continueButton}
-                    onPress={currentStep === steps.length - 1 ? () => router.push('/(menu-ai)/chat') : nextStep}
+                    onPress={currentStep === steps.length - 1 ? () => router.replace({
+                        pathname: "/(menu-ai)/chat",
+                        params: { text: generatePromptFromPreferences(answers) }
+                    }) : nextStep}
                 >
                     <Text style={styles.continueButtonText}>
-                        {currentStep === steps.length - 1 ? 'Hoàn thành' : 'Tiếp theo'}
+                        {currentStep === steps.length - 1 ? t("app.success") : t("app.continue")}
                     </Text>
                 </TouchableOpacity>
             </View>

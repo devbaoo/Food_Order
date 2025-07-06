@@ -3,6 +3,7 @@ import assets from "@/assets";
 import Icon from "@/components/icon";
 import { useAuth } from "@/providers/AuthenticatedProvider";
 import { Info } from "@/types";
+import { toast } from "@/utils/toast";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,6 +40,7 @@ export default function ProfileScreen() {
                         ...info,
                         ...formData
                     }));
+                    toast.success(t('app.success'), t('app.editted_user_info'));
                 });
 
             } finally {

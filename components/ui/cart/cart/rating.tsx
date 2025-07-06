@@ -5,7 +5,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 
 export const RateOrderScreen = ({ ...props }) => {
-    const { pagerRef, loading, restaurant, setStar, star, t } = props;
+    const { pagerRef, loading, restaurantName, review, setStar, star, t } = props;
 
     return (
         <View style={styles.flex1BgGray50}>
@@ -21,10 +21,10 @@ export const RateOrderScreen = ({ ...props }) => {
                     {loading ?
                         <View style={styles.rateImage} />
                         :
-                        <Image source={{ uri: restaurant?.imageUrl }} style={styles.rateImage} />
+                        <Image source={{ uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4_ujwdtIghyTGEbxYYADIMUUxS2e9DBI7Juqa5E4lh3uApfs6Cah8iGfbPnar6pHQaf8&usqp=CAU" }} style={styles.rateImage} />
                     }
                     <Text style={styles.rateText}>
-                        {t("app.how_do_you_rate_order_from", { name: loading ? "Loading..." : restaurant.name })}
+                        {t("app.how_do_you_rate_order_from", { name: loading ? "Loading..." : restaurantName })}
                     </Text>
 
                     {/* Star Rating */}
@@ -47,9 +47,9 @@ export const RateOrderScreen = ({ ...props }) => {
                 <View style={{ marginTop: 'auto' }}>
                     <TouchableOpacity
                         style={styles.submitButton}
-                        onPress={() => pagerRef.current?.setPage(4)}
+                        onPress={() => pagerRef.current?.setPage(1)}
                     >
-                        <Text style={styles.submitButtonText}>{t("app.send")}</Text>
+                        <Text style={styles.submitButtonText}>{review ? t("app.continue") : t("app.send")}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity

@@ -31,12 +31,20 @@ export default function OrderScreen() {
     const [editting, setEditting] = useState<boolean>(false);
     const { t } = useTranslation();
 
+    const customOrder = {
+        'Shipping': 0,
+        'Processing': 2,
+        'Pending': 1,
+        'Delivered': 3,
+        'Cancelled': 4
+    };
+
     const onLoad = async () => {
         setLoading(true);
         try {
             const orders = await getBookingByRestaurantId(restaurant?.id ?? "");
             if (orders && orders.length > 0) {
-                setOrders(orders);
+                setOrders(orders.sort((a, b) => customOrder[a.status] - customOrder[b.status]));
             }
         } finally {
             setLoading(false);
@@ -71,19 +79,61 @@ export default function OrderScreen() {
         }
     };
 
+    const getStatusBadgeStyle = (status?: string) => {
+        const baseStyle = styles.statusBadge;
+        switch (status?.toLowerCase()) {
+            case 'Pending':
+                return { ...baseStyle, backgroundColor: '#fef3c7' };
+            case 'Processing':
+                return { ...baseStyle, backgroundColor: '#dbeafe' };
+            case 'Shipping':
+                return { ...baseStyle, backgroundColor: '#d1fae5' };
+            case 'Delivered':
+                return { ...baseStyle, backgroundColor: '#dcfce7' };
+            case 'Cancelled':
+                return { ...baseStyle, backgroundColor: '#fee2e2' };
+            default:
+                return { ...baseStyle, backgroundColor: '#f3f4f6' };
+        }
+    };
+
+    // Helper function to get status text styles
+    const getStatusTextStyle = (status?: string) => {
+        const baseStyle = styles.statusText;
+        switch (status?.toLowerCase()) {
+            case 'Pending':
+                return { ...baseStyle, color: '#92400e' };
+            case 'Processing':
+                return { ...baseStyle, color: '#1e40af' };
+            case 'Shipping':
+                return { ...baseStyle, color: '#065f46' };
+            case 'Delivered':
+                return { ...baseStyle, color: '#166534' };
+            case 'Cancelled':
+                return { ...baseStyle, color: '#dc2626' };
+            default:
+                return { ...baseStyle, color: '#6b7280' };
+        }
+    };
+
+    // Helper function to get customer initials
+    const getCustomerInitials = (name: string) => {
+        return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'CU';
+    };
+
     const filteredOrders: Booking[] = orders.filter(order => {
         if (activeTab === 'All') return true;
         return order.status === activeTab;
     });
 
-    const updateOrderStatus = async (orderId: string, newStatus: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled') => {
+    const updateOrderStatus = async (orderId: string, newStatus: 'Pending' | 'Processing' | 'Shipping' | 'Delivered' | 'Cancelled') => {
         setEditting(true);
         try {
             await updateBookingStatus(orderId, newStatus);
         } finally {
             setEditting(false);
         }
-        Alert.alert('Success', 'Order status updated successfully');
+        Alert.alert(t("app.success"), t("app.updated_order"));
         await onLoad();
     };
 
@@ -93,15 +143,15 @@ export default function OrderScreen() {
         ));
         setTrackingNumber('');
         setModalVisible(false);
-        Alert.alert('Success', 'Tracking number added successfully');
+        Alert.alert(t("app.success"), t("app.added_tracking_number"));
     };
 
     const OrderCard = (order: Booking) => (
         <View style={styles.orderCard}>
             <View style={styles.orderHeader}>
                 <View>
-                    <Text style={styles.orderId}>#{order.id.slice(6)}</Text>
-                    <Text style={styles.customerName}>{`{{customerName}}`}</Text>
+                    <Text style={styles.orderId}>#{order.id.slice(0, 6)}</Text>
+                    <Text style={styles.customerName}>{order.customer?.name}</Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
                     <Feather name={getStatusIcon(order.status)} size={12} color="white" />
@@ -110,15 +160,15 @@ export default function OrderScreen() {
             </View>
 
             <View style={styles.orderDetails}>
-                <Text style={styles.orderDate}>Order Date: {new Date(order.createdAt).toLocaleDateString()}</Text>
-                <Text style={styles.totalAmount}>Total: {formatCurrency(order.totalPrice)}</Text>
+                <Text style={styles.orderDate}>{t("app.order_date")}: {new Date(order.createdAt).toLocaleDateString()}</Text>
+                <Text style={styles.totalAmount}>{t("app.total")}: {formatCurrency(order.totalPrice)}</Text>
             </View>
 
             <View style={styles.itemsList}>
                 {order.items.map((item: any, index: number) => (
                     <View key={index} style={styles.itemRow}>
-                        <Text style={styles.itemName}>{`{{productName}}`}</Text>
-                        <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <Text style={styles.itemQty}>{t("app.quantity")}: {item.quantity}</Text>
                         <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
                     </View>
                 ))}
@@ -127,7 +177,7 @@ export default function OrderScreen() {
             {order.id && (
                 <View style={styles.trackingInfo}>
                     <Feather name="package" size={16} color="#007AFF" />
-                    <Text style={styles.trackingText}>Tracking: {order.id}</Text>
+                    <Text style={styles.trackingText}>{t("app.tracking")}: {order.id}</Text>
                 </View>
             )}
 
@@ -139,7 +189,7 @@ export default function OrderScreen() {
                         setModalVisible(true);
                     }}
                 >
-                    <Text style={styles.buttonText}>View Details</Text>
+                    <Text style={styles.buttonText}>{t("app.view_detail")}</Text>
                 </TouchableOpacity>
 
                 {order.status === 'Pending' && (
@@ -149,18 +199,7 @@ export default function OrderScreen() {
                         disabled={editting}
                     >
                         {editting && <ActivityIndicator size={18} color="white" />}
-                        <Text style={styles.buttonText}>Process Order</Text>
-                    </TouchableOpacity>
-                )}
-
-                {order.status === 'Processing' && (
-                    <TouchableOpacity
-                        style={styles.shipButton}
-                        onPress={() => updateOrderStatus(order.id, 'Shipped')}
-                        disabled={editting}
-                    >
-                        {editting && <ActivityIndicator size={18} color="white" />}
-                        <Text style={styles.buttonText}>Mark as Shipped</Text>
+                        <Text style={styles.buttonText}>{t("app.process_order")}</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -169,67 +208,119 @@ export default function OrderScreen() {
 
     const OrderDetailModal = () => (
         <Modal
-            animationType="slide"
+            animationType="fade"
             transparent={false}
             visible={modalVisible}
             onRequestClose={() => setModalVisible(false)}
         >
             <SafeAreaView style={styles.modalContainer}>
                 <View style={styles.modalHeader}>
-                    <TouchableOpacity onPress={() => setModalVisible(false)}>
-                        <Feather name="x" size={24} color="#000" />
+                    <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={() => setModalVisible(false)}
+                        activeOpacity={0.7}
+                    >
+                        <Feather name="x" size={20} color="#64748b" />
                     </TouchableOpacity>
-                    <Text style={styles.modalTitle}>Order Details</Text>
-                    <View style={{ width: 24 }} />
+                    <Text style={styles.modalTitle}>{t("app.order_details")}</Text>
+                    <View style={{ width: 36 }} />
                 </View>
 
                 {selectedOrder && (
-                    <ScrollView style={styles.modalContent}>
+                    <ScrollView
+                        style={styles.modalContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {/* Order Information */}
                         <View style={styles.detailSection}>
-                            <Text style={styles.sectionTitle}>Order Information</Text>
-                            <Text style={styles.detailText}>Order ID: #{selectedOrder.id}</Text>
-                            <Text style={styles.detailText}>Date: {selectedOrder.createdAt}</Text>
-                            <Text style={styles.detailText}>Status: {selectedOrder.status}</Text>
-                            <Text style={styles.detailText}>Total: ${selectedOrder.totalPrice.toFixed(2)}</Text>
+                            <Text style={styles.sectionTitle}>{t("app.order_information")}</Text>
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>{t("app.order_id")}</Text>
+                                <Text style={styles.detailValue}>#{selectedOrder.id}</Text>
+                            </View>
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>{t("app.date")}</Text>
+                                <Text style={styles.detailValue}>{new Date(selectedOrder.createdAt).toLocaleDateString()}</Text>
+                            </View>
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>{t("app.status")}</Text>
+                                <View style={getStatusBadgeStyle(selectedOrder.status)}>
+                                    <Text style={getStatusTextStyle(selectedOrder.status)}>
+                                        {selectedOrder.status}
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.divider} />
+
+                            <View style={styles.detailRow}>
+                                <Text style={[styles.detailLabel, { fontSize: 16, fontWeight: '600' }]}>{t("app.total")}</Text>
+                                <Text style={styles.totalPrice}>{formatCurrency(selectedOrder.totalPrice)}</Text>
+                            </View>
                         </View>
 
-                        <View style={styles.detailSection}>
-                            <Text style={styles.sectionTitle}>Customer Information</Text>
-                            <Text style={styles.detailText}>Name: {selectedOrder.customerName}</Text>
-                            <Text style={styles.detailText}>Email: {selectedOrder.customerEmail}</Text>
-                            <Text style={styles.detailText}>Payment: {selectedOrder.paymentMethod}</Text>
+                        {/* Customer Information */}
+                        <View style={styles.customerSection}>
+                            <Text style={styles.sectionTitle}>{t("app.customer_information")}</Text>
+
+                            <View style={styles.customerInfo}>
+                                <View style={styles.customerAvatar}>
+                                    <Text style={styles.customerInitials}>
+                                        {getCustomerInitials(selectedOrder?.customer?.name)}
+                                    </Text>
+                                </View>
+                                <View style={styles.customerDetails}>
+                                    <Text style={styles.customerName}>{selectedOrder?.customer?.name}</Text>
+                                    <Text style={styles.customerPhone}>{selectedOrder?.customer?.phone}</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>{t("app.payment_method")}</Text>
+                                <Text style={styles.detailValue}>{selectedOrder.paymentMethod ?? "VNPay"}</Text>
+                            </View>
                         </View>
 
-                        <View style={styles.detailSection}>
-                            <Text style={styles.sectionTitle}>Shipping Address</Text>
-                            <Text style={styles.detailText}>{selectedOrder.shippingAddress}</Text>
+                        {/* Shipping Address */}
+                        <View style={styles.addressSection}>
+                            <Text style={styles.sectionTitle}>{t("app.shipping_address")}</Text>
+                            <Text style={styles.addressText}>{selectedOrder?.customer?.address}</Text>
                         </View>
 
-                        <View style={styles.detailSection}>
-                            <Text style={styles.sectionTitle}>Items Ordered</Text>
+                        {/* Items Ordered */}
+                        <View style={styles.itemsSection}>
+                            <Text style={styles.sectionTitle}>{t("app.items_ordered")}</Text>
                             {selectedOrder.items.map((item: any, index: number) => (
                                 <View key={index} style={styles.modalItemRow}>
-                                    <Text style={styles.modalItemName}>{item.name}</Text>
-                                    <Text style={styles.detailText}>Quantity: {item.quantity}</Text>
-                                    <Text style={styles.detailText}>Price: ${item.price.toFixed(2)}</Text>
+                                    <View style={styles.modalItemInfo}>
+                                        <Text style={styles.modalItemName}>{item.name}</Text>
+                                        <Text style={styles.modalItemQuantity}>{t("app.quantity")}: {item.quantity}</Text>
+                                    </View>
+                                    <Text style={styles.modalItemPrice}>{formatCurrency(item.price)}</Text>
                                 </View>
                             ))}
                         </View>
 
-                        {!selectedOrder.trackingNumber && selectedOrder.status === 'processing' && (
-                            <View style={styles.detailSection}>
-                                <Text style={styles.sectionTitle}>Add Tracking Number</Text>
+                        {/* Tracking Number Section */}
+                        {!selectedOrder.trackingNumber && selectedOrder.status === 'Processing' && (
+                            <View style={styles.trackingSection}>
+                                <Text style={styles.trackingTitle}>{t("app.add_tracking_number")}</Text>
                                 <TextInput
                                     style={styles.trackingInput}
-                                    placeholder="Enter tracking number"
+                                    placeholder={t("app.enter_tracking_number")}
                                     value={trackingNumber}
                                     onChangeText={setTrackingNumber}
+                                    placeholderTextColor="#9ca3af"
                                 />
                                 <TouchableOpacity
                                     style={styles.addTrackingButton}
                                     onPress={() => addTrackingNumber(selectedOrder.id, trackingNumber)}
+                                    activeOpacity={0.8}
                                 >
-                                    <Text style={styles.buttonText}>Add Tracking</Text>
+                                    <Text style={styles.buttonText}>{t("app.add_tracking_number")}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -242,7 +333,7 @@ export default function OrderScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Order Management</Text>
+                <Text style={styles.headerTitle}>{t("app.order_management")}</Text>
                 <TouchableOpacity onPress={onLoad}>
                     <Feather name="refresh-cw" size={24} color="#007AFF" />
                 </TouchableOpacity>
@@ -276,7 +367,7 @@ export default function OrderScreen() {
                 {filteredOrders.length === 0 && (
                     <View style={styles.emptyState}>
                         <Feather name="inbox" size={48} color="#8E8E93" />
-                        <Text style={styles.emptyText}>No orders found</Text>
+                        <Text style={styles.emptyText}>{t("app.no_orders_found")}</Text>
                     </View>
                 )}
             </ScrollView>
@@ -475,61 +566,217 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#f8fafc',
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        backgroundColor: '#ffffff',
         borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
+        borderBottomColor: '#e2e8f0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    closeButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#f1f5f9',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1e293b',
+        letterSpacing: -0.5,
     },
     modalContent: {
         flex: 1,
         padding: 20,
     },
     detailSection: {
-        marginBottom: 24,
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: '#000',
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 16,
+        color: '#1e293b',
+        letterSpacing: -0.3,
     },
-    detailText: {
+    detailRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    detailLabel: {
         fontSize: 14,
-        color: '#666',
-        marginBottom: 4,
+        color: '#64748b',
+        fontWeight: '500',
+        flex: 1,
+    },
+    detailValue: {
+        fontSize: 14,
+        color: '#1e293b',
+        fontWeight: '600',
+        flex: 2,
+        textAlign: 'right',
+    },
+    totalPrice: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#059669',
+    },
+    customerSection: {
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
+    },
+    customerInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    customerAvatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#3b82f6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    customerInitials: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#ffffff',
+    },
+    customerDetails: {
+        flex: 1,
+    },
+    customerPhone: {
+        fontSize: 14,
+        color: '#64748b',
+    },
+    addressSection: {
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
+    },
+    addressText: {
+        fontSize: 14,
+        color: '#374151',
+        lineHeight: 20,
+        backgroundColor: '#f8fafc',
+        padding: 12,
+        borderRadius: 8,
+        borderLeftWidth: 3,
+        borderLeftColor: '#3b82f6',
+    },
+    itemsSection: {
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
     },
     modalItemRow: {
-        paddingVertical: 8,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        borderBottomColor: '#f1f5f9',
+    },
+    modalItemInfo: {
+        flex: 1,
     },
     modalItemName: {
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: '600',
-        color: '#000',
+        color: '#1e293b',
         marginBottom: 4,
     },
-    trackingInput: {
+    modalItemQuantity: {
+        fontSize: 13,
+        color: '#64748b',
+    },
+    modalItemPrice: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#059669',
+    },
+    trackingSection: {
+        backgroundColor: '#fef3c7',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#e0e0e0',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 12,
+        borderColor: '#fbbf24',
+    },
+    trackingTitle: {
         fontSize: 16,
+        fontWeight: '700',
+        color: '#92400e',
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    trackingInput: {
+        borderWidth: 2,
+        borderColor: '#fbbf24',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        fontSize: 16,
+        backgroundColor: '#ffffff',
     },
     addTrackingButton: {
-        backgroundColor: '#007AFF',
-        paddingVertical: 12,
-        borderRadius: 8,
+        backgroundColor: '#3b82f6',
+        paddingVertical: 16,
+        borderRadius: 12,
         alignItems: 'center',
+        shadowColor: '#3b82f6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#e2e8f0',
+        marginVertical: 8,
     },
 });

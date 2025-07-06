@@ -1,6 +1,9 @@
+import { updateBookingStatus } from "@/api/modules/booking";
+import { restoreVoucherForBooking } from "@/api/modules/voucher";
 import { Booking } from "@/types";
 import { formatCurrency } from "@/utils/currency";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { TFunction } from "i18next";
 import React, { useState } from "react";
 import { TouchableOpacity, View, Text, StyleSheet, Alert } from "react-native";
@@ -8,19 +11,19 @@ import { TouchableOpacity, View, Text, StyleSheet, Alert } from "react-native";
 export const renderBookingItem = ({
     item,
     setSelectedBooking,
-    setLoading,
+    reload,
     t
 }: {
     item: Booking,
     setSelectedBooking: (item: Booking) => void,
-    setLoading: (value: boolean) => void,
+    reload: () => void,
     t: TFunction<"translation", undefined>
 }) => {
     const getStatusColor = (status: Booking['status']) => {
         switch (status) {
             case 'Pending': return '#FFA500';
             case 'Processing': return '#2196F3';
-            case 'Shipped': return '#9C27B0';
+            case 'Shipping': return '#9C27B0';
             case 'Delivered': return '#4CAF50';
             case 'Cancelled': return '#F44336';
             default: return '#757575';
@@ -31,7 +34,7 @@ export const renderBookingItem = ({
         switch (status) {
             case 'Pending': return 'time-outline';
             case 'Processing': return 'refresh-outline';
-            case 'Shipped': return 'car-outline';
+            case 'Shipping': return 'car-outline';
             case 'Delivered': return 'checkmark-circle-outline';
             case 'Cancelled': return 'close-circle-outline';
             default: return 'help-circle-outline';
@@ -53,15 +56,17 @@ export const renderBookingItem = ({
                     text: t('app.yes'),
                     style: 'destructive',
                     onPress: async () => {
-                        setLoading(true);
                         try {
                             // Mock API call - replace with actual API
+                            const isSuccess = await updateBookingStatus(bookingId, "Cancelled");
+                            if(isSuccess) {
+                                await restoreVoucherForBooking(bookingId);
+                            }
                             setTimeout(() => {
-                                setLoading(false);
                                 Alert.alert(t('app.success'), t('app.booking_canceled'));
+                                reload();
                             }, 500);
                         } catch (error) {
-                            setLoading(false);
                             Alert.alert(t('app.error'), t('app.failed_to_cancel_booking'));
                         }
                     }
@@ -73,10 +78,19 @@ export const renderBookingItem = ({
     return (
         <TouchableOpacity
             style={styles.bookingCard}
-            onPress={() => setSelectedBooking(item)}
+            onPress={() => {
+                if (item.status === "Shipping") {
+                    router.push("/(cart)/delivery");
+                } else if(item.status === "Cancelled" || item.status === "Delivered") {
+                    router.push({
+                        pathname: '/(cart)/rating',
+                        params: { bookingId: item.id }
+                    })
+                }
+            }}
         >
             <View style={styles.bookingHeader}>
-                <Text style={styles.bookingId}>#{item.id}</Text>
+                <Text style={styles.bookingId}>#{item.id.slice(0, 6)}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
                     <Ionicons name={getStatusIcon(item.status)} size={16} color="white" />
                     <Text style={styles.statusText}>{item.status}</Text>

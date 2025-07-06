@@ -38,35 +38,35 @@ const MenuSelection = ({
     }, [restaurantId, selectedCategory]);
 
     return (
-        <ScrollView
-            style={styles.menuSection}
-            refreshControl={
-                <RefreshControl onRefresh={onLoad} refreshing={false} />
-            }
-        >
+        <View style={styles.menuSection}>
             <Text style={styles.sectionTitle}>{selectedCategory.name}</Text>
 
-            {foods.map((item) => (
-                <View key={item.id} style={styles.menuItem}>
-                    <View style={styles.menuItemInfo}>
-                        <Text style={styles.menuItemName}>{item.name}</Text>
-                        <View style={styles.priceContainer}>
-                            <Text style={styles.originalPrice}>{t("app.from")} {item.basePrice}</Text>
-                            <Text style={styles.discountedPrice}>{item.basePrice}</Text>
+            {
+                loading ?
+                    <View style={{ paddingTop: 20 }}>
+                        <BackgroundLoading2 style={{ backgroundColor: "transparent" }} />
+                    </View>
+                    :
+                    foods.map((item) => (
+                        <View key={item.id} style={styles.menuItem}>
+                            <View style={styles.menuItemInfo}>
+                                <Text style={styles.menuItemName}>{item.name}</Text>
+                                <View style={styles.priceContainer}>
+                                    <Text style={styles.originalPrice}>{t("app.from")} {item.basePrice}</Text>
+                                    <Text style={styles.discountedPrice}>{item.basePrice}</Text>
+                                </View>
+                                <Text style={styles.menuItemDescription}>{item.description}</Text>
+                            </View>
+                            <View style={styles.menuItemImageContainer}>
+                                <Image source={{ uri: item.imageUrl }} style={styles.menuItemImage} />
+                                <TouchableOpacity style={styles.addButton} onPress={() => onItemClicked(item)}>
+                                    <Ionicons name="add" size={20} color="#fff" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                        <Text style={styles.menuItemDescription}>{item.description}</Text>
-                    </View>
-                    <View style={styles.menuItemImageContainer}>
-                        <Image source={{ uri: item.imageUrl }} style={styles.menuItemImage} />
-                        <TouchableOpacity style={styles.addButton} onPress={() => onItemClicked(item)}>
-                            <Ionicons name="add" size={20} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            ))}
-
-            {loading && <BackgroundLoading2 />}
-        </ScrollView>
+                    ))
+            }
+        </View>
     )
 }
 

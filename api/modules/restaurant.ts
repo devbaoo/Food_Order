@@ -1,6 +1,6 @@
 import { firestore } from "@/lib/firebase-config";
 import { Restaurant } from "@/types";
-import { collection, doc, DocumentReference, getDoc, getDocs, query, where } from "@firebase/firestore";
+import { collection, doc, DocumentReference, getDoc, getDocs, query, updateDoc, where } from "@firebase/firestore";
 
 export const getAllRestaurants = async (category?: string | null, userId?: string) => {
   try {
@@ -33,20 +33,36 @@ export const getAllRestaurants = async (category?: string | null, userId?: strin
       });
     }
 
-    const restaurants: Restaurant[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      restaurants.push({
-        id: doc.id ?? '',
-        name: data?.name ?? '',
-        imageUrl: data?.imageUrl ?? '',
-        rating: data?.rating ?? 0,
-        ratingCount: data?.ratingCount ?? 0,
-        address: data?.address ?? '',
-        favourite: favouriteIds.has(doc.id),
-        location: data?.location ?? { latitude: 0, longitude: 0 }
-      });
-    });
+    const restaurants: Restaurant[] = await Promise.all(
+      querySnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        const categoryRefs = (data.categories ?? []) as DocumentReference[];
+
+        const categoryDocs = await Promise.all(
+          categoryRefs.map((ref) => getDoc(ref))
+        );
+
+        const categories = categoryDocs
+          .filter((catSnap) => catSnap.exists())
+          .map((catSnap) => ({
+            id: catSnap.id,
+            name: catSnap.data()?.name ?? '',
+            icon: catSnap.data()?.icon ?? '',
+          }));
+
+        return {
+          id: doc.id ?? '',
+          name: data?.name ?? '',
+          imageUrl: data?.imageUrl ?? '',
+          rating: data?.rating ?? 0,
+          ratingCount: data?.ratingCount ?? 0,
+          address: data?.address ?? '',
+          favourite: favouriteIds.has(doc.id),
+          location: data?.location ?? { latitude: 0, longitude: 0 },
+          categories
+        } as Restaurant;
+      })
+    );
 
     return restaurants;
   } catch (error) {
@@ -100,7 +116,7 @@ export const getRestaurantByUserId = async (userId: string) => {
   }
 };
 
-export const getRestaurantById = async (restaurantId: string) => {
+export const getRestaurantById = async (restaurantId: string, userId?: string) => {
   try {
     const docRef = doc(firestore, "restaurants", restaurantId);
     const docSnap = await getDoc(docRef);
@@ -123,13 +139,30 @@ export const getRestaurantById = async (restaurantId: string) => {
         name: catSnap.data()?.name ?? "",
       }));
 
+    let favouriteIds = new Set<string>();
+    if (userId) {
+      const favQuery = query(
+        collection(firestore, "favourites"),
+        where("userId", "==", userId)
+      );
+      const favSnapshot = await getDocs(favQuery);
+      favSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data?.restaurantId) {
+          favouriteIds.add(data.restaurantId);
+        }
+      });
+    }
+
     return {
       id: docSnap.id,
       name: data.name ?? "",
       imageUrl: data.imageUrl ?? "",
       rating: data.rating ?? 0,
       ratingCount: data.ratingCount ?? 0,
+      address: data.address ?? "",
       categories,
+      favourite: favouriteIds.has(docSnap.id)
     } as Restaurant;
   } catch (error) {
     console.error("Error fetching restaurant by userId:", error);
@@ -207,4 +240,50 @@ export async function getFavouriteRestaurants(userId: string) {
   }
 
   return restaurantList;
+}
+
+export const updateRestaurantRating = async (restaurantId: string, star: number) => {
+  if (restaurantId) {
+    const restaurantRef = doc(firestore, 'restaurants', restaurantId);
+    const restaurantSnap = await getDoc(restaurantRef);
+
+    if (restaurantSnap.exists()) {
+      const restaurantData = restaurantSnap.data();
+      const currentRatingCount = restaurantData.ratingCount || 0;
+      const currentAverageRating = restaurantData.rating || 0;
+
+      const newRatingCount = currentRatingCount + 1;
+      const newAverageRating = (
+        (currentAverageRating * currentRatingCount + star) / newRatingCount
+      );
+
+      await updateDoc(restaurantRef, {
+        ratingCount: newRatingCount,
+        rating: newAverageRating,
+      });
+    }
+  }
+}
+
+export async function getRestaurantsBySearchTerm(searchTerm: string) {
+  try {
+    const restaurantsRef = collection(firestore, 'restaurants');
+
+    // lowercase search term for case-insensitive comparison
+    const lowerSearch = searchTerm.toLowerCase();
+
+    // Firestore chưa hỗ trợ search `contains` tốt -> workaround: fetch all & filter client-side
+    const snapshot = await getDocs(restaurantsRef);
+
+    const results = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter((restaurant: any) =>
+        restaurant.name?.toLowerCase().includes(lowerSearch)
+      );
+
+    return results as Restaurant[];
+  } catch (error) {
+    console.error('Error fetching restaurants:', error);
+    return [];
+  }
 }

@@ -39,7 +39,7 @@ const OrdersScreen = () => {
         setLoading(true);
         const bookings = await getAllBookings(info?.id ?? "");
         setTimeout(() => {
-            setBookings(bookings);
+            setBookings(bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
             setLoading(false);
         }, 500);
     }
@@ -89,7 +89,7 @@ const OrdersScreen = () => {
                         :
                         <FlatList
                             data={bookings}
-                            renderItem={({ item }) => renderBookingItem({ item, setSelectedBooking, setLoading, t })}
+                            renderItem={({ item }) => renderBookingItem({ item, setSelectedBooking, reload: onLoad, t })}
                             keyExtractor={(item) => item.id}
                             contentContainerStyle={{ padding: 16 }}
                             refreshing={loading}

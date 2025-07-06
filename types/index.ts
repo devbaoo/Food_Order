@@ -6,3 +6,4 @@ export * from './food';
 export * from './cart';
 export * from './info';
 export * from './booking';
+export * from './review';

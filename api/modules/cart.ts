@@ -67,7 +67,7 @@ export async function updateCartItem(
         }
 
         // Lọc item số lượng > 0
-        updatedItems = updatedItems.filter((item: any) => item.quantity > 0);
+        updatedItems = updatedItems?.filter((item: any) => item.quantity > 0);
 
         // Nếu giỏ hàng rỗng sau khi cập nhật → reset restaurantId
         if (updatedItems.length === 0) {

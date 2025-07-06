@@ -15,6 +15,7 @@ import { getAllCategories } from '@/api/modules/category';
 import { router } from 'expo-router';
 import { useAuth } from '@/providers/AuthenticatedProvider';
 import { firestore } from '@/lib/firebase-config';
+import { useTranslation } from 'react-i18next';
 
 type RestaurantFormData = {
     name: string;
@@ -35,6 +36,7 @@ const RestaurantRegisterScreen = () => {
     });
     const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(false);
+    const { t } = useTranslation();
 
     const onLoad = async () => {
         const categories = await getAllCategories();
@@ -60,11 +62,11 @@ const RestaurantRegisterScreen = () => {
 
     const validateForm = () => {
         if (!formData.name.trim()) {
-            Alert.alert('Error', 'Restaurant name is required');
+            Alert.alert(t("app.error"), t("app.store_may_not_be_empty"));
             return false;
         }
         if (formData.categories.length === 0) {
-            Alert.alert('Error', 'At least one category is required');
+            Alert.alert(t("app.error"), t("app.at_least_one_category_choose"));
             return false;
         }
         return true;
@@ -89,8 +91,8 @@ const RestaurantRegisterScreen = () => {
             await addDoc(collection(firestore, 'restaurants'), restaurantData);
 
             Alert.alert(
-                'Success',
-                'Restaurant registered successfully!',
+                t("app.success"),
+                t("app.restaurant_registered"),
                 [{
                     text: 'OK', onPress: () => {
                         resetForm();
@@ -100,7 +102,7 @@ const RestaurantRegisterScreen = () => {
             );
         } catch (error) {
             console.error('Error registering restaurant:', error);
-            Alert.alert('Error', 'Failed to register restaurant. Please try again.');
+            Alert.alert(t("app.error"), t("app.error_in_registering_restaurant"));
         } finally {
             setLoading(false);
         }
@@ -119,29 +121,29 @@ const RestaurantRegisterScreen = () => {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Register Restaurant</Text>
-                <Text style={styles.subtitle}>Add your restaurant details</Text>
+                <Text style={styles.title}>{t("app.register_restaurant")}</Text>
+                <Text style={styles.subtitle}>{t("app.add_your_restaurant_details")}</Text>
             </View>
 
             {/* Restaurant Name */}
             <View style={styles.section}>
-                <Text style={styles.label}>Restaurant Name *</Text>
+                <Text style={styles.label}>{t("app.restaurant_name")} *</Text>
                 <TextInput
                     style={styles.input}
                     value={formData.name}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-                    placeholder="Enter restaurant name"
+                    placeholder={t("app.enter_restaurant_name")}
                     placeholderTextColor="#999"
                 />
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.label}>Address *</Text>
+                <Text style={styles.label}>{t("app.address")} *</Text>
                 <TextInput
                     style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
                     value={formData.address}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, address: text }))}
-                    placeholder="Enter address"
+                    placeholder={t("app.enter_address")}
                     placeholderTextColor="#999"
                     multiline
                     numberOfLines={4}
@@ -150,7 +152,7 @@ const RestaurantRegisterScreen = () => {
 
             {/* Categories */}
             <View style={styles.section}>
-                <Text style={styles.label}>Categories *</Text>
+                <Text style={styles.label}>{t("app.category")} *</Text>
                 <View style={styles.chipContainer}>
                     {availableCategories.map(category => (
                         <TouchableOpacity
@@ -174,7 +176,7 @@ const RestaurantRegisterScreen = () => {
                 {/* Display selected categories */}
                 {formData.categories.length > 0 && (
                     <View style={styles.selectedContainer}>
-                        <Text style={styles.selectedLabel}>Selected:</Text>
+                        <Text style={styles.selectedLabel}>{t("app.selected")}:</Text>
                         <Text style={styles.selectedText}>
                             {availableCategories
                                 .filter(cat => formData.categories.includes(cat.id))
@@ -195,7 +197,7 @@ const RestaurantRegisterScreen = () => {
                 {loading ? (
                     <ActivityIndicator color="#fff" />
                 ) : (
-                    <Text style={styles.submitText}>Register Restaurant</Text>
+                    <Text style={styles.submitText}>{t("app.register_restaurant")}</Text>
                 )}
             </TouchableOpacity>
 

@@ -8,6 +8,8 @@ import {
     TextInput,
     Image,
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Modal from '@/components/modal';
@@ -17,9 +19,9 @@ import { Food } from '@/types';
 import { toast } from '@/utils/toast';
 import { TFunction } from 'i18next';
 
-const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: { 
-    visible: boolean, 
-    onClose: () => void, 
+const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: {
+    visible: boolean,
+    onClose: () => void,
     selectedFood: Food | null,
     t: TFunction<"translation", undefined>
 }) => {
@@ -80,105 +82,115 @@ const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: {
                 <Text style={styles.headerTitle}>{t("app.custom")}</Text>
             </View>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Product Image */}
-                <View style={styles.imageContainer}>
-                    {/* Replace this View with your actual Image component */}
-                    <Image source={{ uri: selectedFood?.imageUrl }} style={styles.placeholderImage} />
-                </View>
-
-                {/* Product Info */}
-                <View style={styles.productInfo}>
-                    <Text style={styles.productName}>{selectedFood?.name}</Text>
-                    <View style={styles.priceContainer}>
-                        <Text style={styles.discountedPrice}>
-                            {t("app.from")} {formatPrice(getCurrentPrice())}
-                        </Text>
-                        <Text style={styles.originalPrice}>
-                            {formatPrice(getOriginalPrice())}
-                        </Text>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1 }}
+            >
+                <ScrollView
+                    style={styles.content}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                >
+                    {/* Product Image */}
+                    <View style={styles.imageContainer}>
+                        {/* Replace this View with your actual Image component */}
+                        <Image source={{ uri: selectedFood?.imageUrl }} style={styles.placeholderImage} />
                     </View>
-                    <Text style={styles.description}>{selectedFood?.description}</Text>
-                </View>
 
-                {/* Size Selection */}
-                <View style={styles.optionsContainer}>
-                    <View style={styles.optionHeader}>
-                        <Text style={styles.optionTitle}>{t("app.selection")}</Text>
-                        <View style={styles.requiredBadge}>
-                            <Text style={styles.requiredText}>{t("app.requirement")}</Text>
+                    {/* Product Info */}
+                    <View style={styles.productInfo}>
+                        <Text style={styles.productName}>{selectedFood?.name}</Text>
+                        <View style={styles.priceContainer}>
+                            <Text style={styles.discountedPrice}>
+                                {t("app.from")} {formatPrice(getCurrentPrice())}
+                            </Text>
+                            <Text style={styles.originalPrice}>
+                                {formatPrice(getOriginalPrice())}
+                            </Text>
+                        </View>
+                        <Text style={styles.description}>{selectedFood?.description}</Text>
+                    </View>
+
+                    {/* Size Selection */}
+                    <View style={styles.optionsContainer}>
+                        <View style={styles.optionHeader}>
+                            <Text style={styles.optionTitle}>{t("app.selection")}</Text>
+                            <View style={styles.requiredBadge}>
+                                <Text style={styles.requiredText}>{t("app.requirement")}</Text>
+                            </View>
+                        </View>
+                        <Text style={styles.optionSubtitle}>{t("app.choose")} 1</Text>
+
+                        {selectedFood?.variants.map((option, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={styles.optionItem}
+                                onPress={() => setSelectedSize(option.label)}
+                            >
+                                <View style={styles.optionLeft}>
+                                    <View style={styles.radioButton}>
+                                        {selectedSize === option.label && (
+                                            <View style={styles.radioButtonSelected} />
+                                        )}
+                                    </View>
+                                    <Text style={styles.optionName}>{option.label}</Text>
+                                </View>
+                                <View style={styles.optionPrices}>
+                                    <Text style={styles.optionDiscountPrice}>
+                                        {formatPrice(option.price)}
+                                    </Text>
+                                    <Text style={styles.optionOriginalPrice}>
+                                        {formatPrice(option.price)}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>{t("app.special_request")}</Text>
+                        <Text style={styles.sectionSubtitle}>
+                            {t("app.notice")}
+                        </Text>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.inputLabel}>{t("app.request")}</Text>
+                            <TextInput
+                                style={styles.textInput}
+                                placeholder={t("app.example_food")}
+                                value={specialRequirements}
+                                onChangeText={setSpecialRequirements}
+                                multiline
+                                numberOfLines={4}
+                                textAlignVertical="top"
+                            />
                         </View>
                     </View>
-                    <Text style={styles.optionSubtitle}>{t("app.choose")} 1</Text>
 
-                    {selectedFood?.variants.map((option, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={styles.optionItem}
-                            onPress={() => setSelectedSize(option.label)}
-                        >
-                            <View style={styles.optionLeft}>
-                                <View style={styles.radioButton}>
-                                    {selectedSize === option.label && (
-                                        <View style={styles.radioButtonSelected} />
-                                    )}
+                    {/* Product Availability Section */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>{t("app.food_is_not_available")}</Text>
+
+                        {productOptions.map((product, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={styles.productItem}
+                                onPress={() => { }}
+                            >
+                                <View style={styles.productContent}>
+                                    <Text style={styles.productText}>{product}</Text>
+                                    <Ionicons
+                                        name="chevron-forward"
+                                        size={20}
+                                        color="#666"
+                                    />
                                 </View>
-                                <Text style={styles.optionName}>{option.label}</Text>
-                            </View>
-                            <View style={styles.optionPrices}>
-                                <Text style={styles.optionDiscountPrice}>
-                                    {formatPrice(option.price)}
-                                </Text>
-                                <Text style={styles.optionOriginalPrice}>
-                                    {formatPrice(option.price)}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t("app.special_request")}</Text>
-                    <Text style={styles.sectionSubtitle}>
-                        {t("app.notice")}
-                    </Text>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>{t("app.request")}</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            placeholder={t("app.example_food")}
-                            value={specialRequirements}
-                            onChangeText={setSpecialRequirements}
-                            multiline
-                            numberOfLines={4}
-                            textAlignVertical="top"
-                        />
+                            </TouchableOpacity>
+                        ))}
                     </View>
-                </View>
-
-                {/* Product Availability Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t("app.food_is_not_available")}</Text>
-
-                    {productOptions.map((product, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={styles.productItem}
-                            onPress={() => { }}
-                        >
-                            <View style={styles.productContent}>
-                                <Text style={styles.productText}>{product}</Text>
-                                <Ionicons
-                                    name="chevron-forward"
-                                    size={20}
-                                    color="#666"
-                                />
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Bottom Section */}
             <View style={styles.bottomSection}>
@@ -217,6 +229,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+        pointerEvents: "auto"
     },
     header: {
         flexDirection: 'row',

@@ -1,37 +1,32 @@
-import { createBookingsFromCart } from "@/api/modules/booking";
-import { toast } from "@/utils/toast";
+import { getBookingById } from "@/api/modules/booking";
 import { AntDesign } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
-import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native";
+import { router } from "expo-router";
+import React, { useEffect } from "react";
+import { TouchableOpacity, View, Text, StyleSheet, Image, ScrollView, RefreshControl } from "react-native";
 
 export const CookingCartScreen = ({ ...props }) => {
-    const { pagerRef, loading, restaurant, cart, currentPage, setBookingId, t } = props;
+    const { pagerRef, loading, restaurant, t, bookingId } = props;
 
-    const onSubmit = async () => {
-        if (!cart) {
-            toast.error(t("app.error"), t("app.cart_does_not_exists"));
-            return;
-        }
-        const booking = await createBookingsFromCart(cart);
-        toast.success(t("app.success"), t("app.thanks"));
-        pagerRef.current?.setPage(2);
-        setBookingId(booking?.bookingId);
+    const onLoad = async () => {
+        const booking = await getBookingById(bookingId);
+        console.log(booking);
     }
 
     useEffect(() => {
-        if (currentPage === 1) {
-            onSubmit();
-        }
-    }, [currentPage]);
+        if (bookingId) onLoad();
+    }, [bookingId]);
 
     return (
-        <View style={styles.flex1BgGray50}>
+        <ScrollView
+            contentContainerStyle={styles.flex1BgGray50}
+            refreshControl={<RefreshControl refreshing={false} onRefresh={onLoad} />}
+        >
             {/* Header */}
             <View style={styles.headerContainer}>
                 <TouchableOpacity
-                    onPress={() => pagerRef.current?.setPage(0)}
+                    onPress={() => router.replace("/(home)")}
                 >
-                    <AntDesign name="arrowleft" size={24} color="black" />
+                    <AntDesign name="home" size={24} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{t("app.cart")}</Text>
                 <View style={styles.headerSpacer} />
@@ -66,7 +61,7 @@ export const CookingCartScreen = ({ ...props }) => {
                     {t("app.please_wait")}
                 </Text>
             </View>
-        </View>
+        </ScrollView>
     )
 };
 

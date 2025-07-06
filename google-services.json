@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "41177389907-e444qjl5vdun318fh4hdsf2qbupgihc6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dk.foodorder",
+            "certificate_hash": "dbebdc768ca78c929a3359a6dd1cc96127f5023f"
+          }
+        },
+        {
           "client_id": "41177389907-km44b43mfaai9s901icjfcj2720k8gvm.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.dk.foodorder",
             "certificate_hash": "47abbafe906387a42cc30311b33314d1008492e2"
+          }
+        },
+        {
+          "client_id": "41177389907-ng54o1jia1qd8pba95tbieu43h89dofm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dk.foodorder",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {

@@ -15,7 +15,7 @@ const AppStack: React.FC = () => {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Home',
+                    title: 'Trang chủ',
                     tabBarIcon: ({ focused }) => (
                         <Ionicons
                             name="home"
@@ -27,7 +27,7 @@ const AppStack: React.FC = () => {
             <Tabs.Screen
                 name="order"
                 options={{
-                    title: 'Orders',
+                    title: 'Đơn hàng',
                     tabBarIcon: ({ focused }) => (
                         <Ionicons name="receipt-outline" size={24} color={focused ? "violet" : "black"} />
                     ),
@@ -36,7 +36,7 @@ const AppStack: React.FC = () => {
             <Tabs.Screen
                 name="product"
                 options={{
-                    title: 'Products',
+                    title: 'Sản phẩm',
                     tabBarIcon: ({ focused }) => (
                         <Ionicons name="cube" size={24} color={focused ? "violet" : "black"} />
                     ),
@@ -45,7 +45,7 @@ const AppStack: React.FC = () => {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: 'Profile',
+                    title: 'Hồ sơ',
                     tabBarIcon: ({ focused }) => (
                         <Ionicons name="person" size={24} color={focused ? "violet" : "black"} />
                     ),

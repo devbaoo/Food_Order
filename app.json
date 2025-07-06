@@ -42,6 +42,12 @@
           "image": "./assets/images/background/background_full.png",
           "resizeMode": "contain"
         }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+        }
       ]
     ],
     "experiments": {
@@ -53,7 +59,8 @@
       },
       "eas": {
         "projectId": "69c1825c-eb0b-41b9-9386-00bb4407cde6"
-      }
+      },
+      "googleWebClientId": "41177389907-fr6hv5tafpegv834h62t7svalfe0e2d4.apps.googleusercontent.com"
     }
   }
 }

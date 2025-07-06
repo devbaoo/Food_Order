@@ -22,6 +22,7 @@ export const renderRestaurantCard = (
                 <ImageBackground source={{ uri: restaurant.imageUrl }} style={{ position: 'relative', width: '100%', height: '100%' }}>
                     <View style={styles.deliveryTime}>
                         <Text style={styles.deliveryTimeText}>20 - 30 {t("app.minutes")}</Text>
+                        <Text numberOfLines={1} style={styles.deliveryTimeText}>{t("app.address")}: {restaurant.address}</Text>
                     </View>
                     {
                         showFavourite && <TouchableOpacity style={styles.favoriteButton}
@@ -37,7 +38,10 @@ export const renderRestaurantCard = (
                 <Text style={styles.restaurantName}>{restaurant?.name ?? "Loading..."}</Text>
                 <View style={styles.ratingRow}>
                     <Ionicons name="star" size={14} color="#FFB800" />
-                    <Text style={styles.rating}>{restaurant?.rating}</Text>
+                    <Text style={styles.rating}>{(restaurant?.rating ?? 0).toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                    })}</Text>
                     <Text style={styles.reviews}>({restaurant?.ratingCount})</Text>
                 </View>
 
@@ -92,11 +96,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
+        overflowX: 'hidden',
+        maxWidth: '60%'
     },
     deliveryTimeText: {
         color: '#fff',
         fontSize: 12,
         fontWeight: '500',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
     },
     favoriteButton: {
         position: 'absolute',

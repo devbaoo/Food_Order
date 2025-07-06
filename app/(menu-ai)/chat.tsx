@@ -6,38 +6,116 @@ import {
     ScrollView,
     TextInput,
     TouchableOpacity,
-    SafeAreaView,
-    StatusBar,
     KeyboardAvoidingView,
     Platform,
+    ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import Together from "together-ai";
+import { useTranslation } from 'react-i18next';
 
 export default function ChatScreen() {
+    const { t } = useTranslation();
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "Tôi muốn ăn đồ tây nhưng mà phải healthy, tôi bị trào viêm da còn dị ứng lacto",
-            isUser: true,
-            timestamp: "8:10 p.m"
-        },
-        {
-            id: 2,
-            text: "Hi! Tôi là MôMênu của bạn. Tôi có thể đáp ứng 7749 yêu cầu của bạn từ A tới Á. Thiếu người yêu nhắn tin mỗi ngày hãy nhắn tin cho tôi. Mà phải tải app mới được trải nghiệm ớ nhen.",
+            text: t("app.init_ai_chat"),
             isUser: false,
-            timestamp: "8:11 p.m"
+            timestamp: new Date().toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            })
         }
     ]);
     const [inputText, setInputText] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
+    const params = useLocalSearchParams();
 
-    const sendMessage = () => {
-        if (inputText.trim()) {
-            const newMessage = {
-                id: messages.length + 1,
-                text: inputText.trim(),
-                isUser: true,
+    const together = new Together({
+        baseURL: process.env.EXPO_PUBLIC_TOGETHER_BASE_URL,
+        apiKey: process.env.EXPO_PUBLIC_TOGETHER_API_KEY
+    });
+
+    // Alternative: Using Together AI (Free credits)
+    const callTogetherAPI = async (userMessage: any) => {
+        try {
+            const response = await together.chat.completions.create({
+                messages: [
+                    {
+                        role: "user",
+                        content: userMessage
+                    }
+                ],
+                model: "lgai/exaone-3-5-32b-instruct"
+            });
+
+            return response.choices[0].message?.content ?? "";
+        } catch (error) {
+            console.error('Together API Error:', error);
+            throw error;
+        }
+    };
+
+    // Fallback: Simple rule-based responses for demo
+    const getFallbackResponse = (userMessage: any) => {
+        const lowerMessage = userMessage.toLowerCase();
+
+        if (lowerMessage.includes('dinh dưỡng') || lowerMessage.includes('ăn gì')) {
+            return t("app.nutrition_result");
+        } else if (lowerMessage.includes('sức khỏe') || lowerMessage.includes('khỏe mạnh')) {
+            return t("app.health_result");
+        } else if (lowerMessage.includes('dạ dày') || lowerMessage.includes('tiêu hóa')) {
+            return t("app.stomach_result");
+        } else {
+            return t("app.thanks_result");
+        }
+    };
+
+    const sendMessage = async () => {
+        if (!inputText.trim()) return;
+
+        const userMessage = inputText.trim();
+        const newUserMessage = {
+            id: Date.now(),
+            text: userMessage,
+            isUser: true,
+            timestamp: new Date().toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            })
+        };
+
+        // Add user message
+        setMessages(prev => [...prev, newUserMessage]);
+        setInputText('');
+        setIsLoading(true);
+
+        try {
+            let aiResponse;
+
+            // Try different APIs in order of preference
+            if (process.env.EXPO_PUBLIC_TOGETHER_API_KEY) {
+                aiResponse = await callTogetherAPI(userMessage);
+            } else {
+                // Use fallback response for demo
+                aiResponse = getFallbackResponse(userMessage);
+            }
+
+            // Clean up the response
+            aiResponse = aiResponse ? aiResponse.replace(userMessage, '').trim() : "";
+            if (!aiResponse) {
+                aiResponse = getFallbackResponse(userMessage);
+            }
+
+            // Add AI response
+            const aiMessage = {
+                id: Date.now() + 1,
+                text: aiResponse,
+                isUser: false,
                 timestamp: new Date().toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -45,23 +123,95 @@ export default function ChatScreen() {
                 })
             };
 
-            setMessages(prev => [...prev, newMessage]);
-            setInputText('');
+            setMessages(prev => [...prev, aiMessage]);
+        } catch (error) {
+            console.error('AI API Error:', error);
 
-            // Simulate AI response after a delay
-            setTimeout(() => {
-                const aiResponse = {
-                    id: messages.length + 2,
-                    text: "Tôi hiểu bạn muốn ăn đồ Tây mà vẫn healthy và phù hợp với tình trạng trào ngược dạ dày. Tôi sẽ gợi ý một số món ăn phù hợp cho bạn.",
-                    isUser: false,
-                    timestamp: new Date().toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    })
-                };
-                setMessages(prev => [...prev, aiResponse]);
-            }, 1500);
+            // Use fallback response on error
+            const fallbackResponse = getFallbackResponse(userMessage);
+            const errorMessage = {
+                id: Date.now() + 1,
+                text: fallbackResponse,
+                isUser: false,
+                timestamp: new Date().toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                })
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const sendInitMessage = async (text: string) => {
+        if (!text.trim()) return;
+
+        const userMessage = text.trim();
+        const newUserMessage = {
+            id: Date.now(),
+            text: userMessage,
+            isUser: true,
+            timestamp: new Date().toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            })
+        };
+
+        // Add user message
+        setMessages(prev => [...prev, newUserMessage]);
+        setIsLoading(true);
+
+        try {
+            let aiResponse;
+
+            // Try different APIs in order of preference
+            if (process.env.EXPO_PUBLIC_TOGETHER_API_KEY) {
+                aiResponse = await callTogetherAPI(userMessage);
+            } else {
+                // Use fallback response for demo
+                aiResponse = getFallbackResponse(userMessage);
+            }
+
+            // Clean up the response
+            aiResponse = aiResponse ? aiResponse.replace(userMessage, '').trim() : "";
+            if (!aiResponse) {
+                aiResponse = getFallbackResponse(userMessage);
+            }
+
+            // Add AI response
+            const aiMessage = {
+                id: Date.now() + 1,
+                text: aiResponse,
+                isUser: false,
+                timestamp: new Date().toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                })
+            };
+
+            setMessages(prev => [...prev, aiMessage]);
+        } catch (error) {
+            console.error('AI API Error:', error);
+
+            // Use fallback response on error
+            const fallbackResponse = getFallbackResponse(userMessage);
+            const errorMessage = {
+                id: Date.now() + 1,
+                text: fallbackResponse,
+                isUser: false,
+                timestamp: new Date().toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                })
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -69,6 +219,12 @@ export default function ChatScreen() {
         // Auto scroll to bottom when new messages are added
         scrollViewRef.current?.scrollToEnd({ animated: true });
     }, [messages]);
+
+    useEffect(() => {
+        if (params && params.text) {
+            sendInitMessage(params.text as string);
+        }
+    }, [params?.text]);
 
     const renderMessage = (message: any) => {
         return (
@@ -111,8 +267,16 @@ export default function ChatScreen() {
                 <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(home)')}>
                     <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>MOME AI</Text>
+                <Text style={styles.headerTitle}>MOME AI (Free)</Text>
                 <View style={styles.placeholder} />
+            </View>
+
+            {/* API Info Banner */}
+            <View style={styles.infoBanner}>
+                <Ionicons name="information-circle-outline" size={16} color="#666" />
+                <Text style={styles.infoText}>
+                    {t("app.use_api_key")}
+                </Text>
             </View>
 
             {/* Messages */}
@@ -123,6 +287,14 @@ export default function ChatScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {messages.map(renderMessage)}
+                {isLoading && (
+                    <View style={styles.loadingContainer}>
+                        <View style={styles.loadingBubble}>
+                            <ActivityIndicator size="small" color="#FF6B35" />
+                            <Text style={styles.loadingText}>{t("app.ai_is_thinking")}</Text>
+                        </View>
+                    </View>
+                )}
             </ScrollView>
 
             {/* Input Area */}
@@ -137,26 +309,27 @@ export default function ChatScreen() {
 
                     <TextInput
                         style={styles.textInput}
-                        placeholder="Write something..."
+                        placeholder={t("app.input_message")}
                         placeholderTextColor="#999"
                         value={inputText}
                         onChangeText={setInputText}
                         multiline
                         maxLength={500}
+                        editable={!isLoading}
                     />
 
                     <TouchableOpacity
                         style={[
                             styles.sendButton,
-                            inputText.trim() ? styles.sendButtonActive : null
+                            (inputText.trim() && !isLoading) ? styles.sendButtonActive : null
                         ]}
                         onPress={sendMessage}
-                        disabled={!inputText.trim()}
+                        disabled={!inputText.trim() || isLoading}
                     >
                         <Ionicons
                             name="send"
                             size={20}
-                            color={inputText.trim() ? "#FF6B35" : "#999"}
+                            color={(inputText.trim() && !isLoading) ? "#FF6B35" : "#999"}
                         />
                     </TouchableOpacity>
                 </View>
@@ -191,6 +364,21 @@ const styles = StyleSheet.create({
     },
     placeholder: {
         width: 34,
+    },
+    infoBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f8f9fa',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e9ecef',
+    },
+    infoText: {
+        marginLeft: 5,
+        fontSize: 12,
+        color: '#666',
+        flex: 1,
     },
     messagesContainer: {
         flex: 1,
@@ -273,6 +461,26 @@ const styles = StyleSheet.create({
     },
     aiMessageText: {
         color: '#333',
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    loadingBubble: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f8f9fa',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 20,
+        marginLeft: 40,
+    },
+    loadingText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: '#666',
     },
     inputContainer: {
         backgroundColor: '#fff',

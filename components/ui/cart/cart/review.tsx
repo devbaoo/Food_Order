@@ -2,15 +2,36 @@ import { createVoucher } from "@/api/modules/voucher";
 import { toast } from "@/utils/toast";
 import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
-import { ScrollView, View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, Image, ActivityIndicator, TouchableWithoutFeedback } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ScrollView, View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, Image, ActivityIndicator, TouchableWithoutFeedback, Alert } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
+import { serverTimestamp } from "firebase/firestore";
+import { saveReviewToFirestore } from "@/api/modules/review";
+import { updateRestaurantRating } from "@/api/modules/restaurant";
+import { generateRandomVoucher } from "@/utils/voucher";
+
+// Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_NAME as string;
+const CLOUDINARY_UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET as string;
 
 export const ReviewOrderScreen = ({ ...props }) => {
-    const { loading, restaurant, bookingId, info, star, t } = props;
-    const [review, setReview] = useState("");
+    const { loading, booking, info, star, review, t } = props;
+    const [content, setContent] = useState("");
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [isVisible, setIsVisible] = useState(false);
     const [isCollecting, setIsCollecting] = useState(false);
+    const [selectedImages, setSelectedImages] = useState<string[]>([]);
+    const [isUploadingImages, setIsUploadingImages] = useState(false);
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+    const voucher = generateRandomVoucher(info?.id ?? "");
+
+    useEffect(() => {
+        if (review) {
+            setSelectedOptions(review.selectedOptions);
+            setContent(review.comment);
+            setSelectedImages(review.images);
+        }
+    }, [review]);
 
     const toggleOption = (option: string) => {
         setSelectedOptions(prev =>
@@ -22,31 +43,191 @@ export const ReviewOrderScreen = ({ ...props }) => {
 
     const onCollect = async () => {
         setIsCollecting(true);
-        await createVoucher(info?.id);
-        toast.success(t("app.success"), t("app.save_success"));
-        setTimeout(() => {
-            setIsVisible(false);
-            router.replace("/(home)");
-        }, 500);
-    }
+        try {
+            await createVoucher(voucher);
+            toast.success(t("app.success"), t("app.save_success"));
+            setTimeout(() => {
+                setIsVisible(false);
+                router.replace("/(home)");
+            }, 500);
+        } catch (error) {
+            toast.error(t("app.error"), t("app.error_message"));
+        } finally {
+            setIsCollecting(false);
+        }
+    };
+
+    // Function to upload image to Cloudinary
+    const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', {
+            uri: imageUri,
+            type: 'image/jpeg',
+            name: 'review_image.jpg',
+        } as any);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error?.message || 'Failed to upload image');
+        }
+        return data.secure_url;
+    };
+
+    // Function to pick images from gallery
+    const pickImages = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                    t("app.permission_required"),
+                    t("app.camera_permission_message")
+                );
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsMultipleSelection: true,
+                quality: 0.8,
+                selectionLimit: 5 - selectedImages.length, // Limit to 5 images total
+            });
+
+            if (!result.canceled) {
+                const newImages = result.assets.map(asset => asset.uri);
+                setSelectedImages(prev => [...prev, ...newImages]);
+            }
+        } catch (error) {
+            console.error('Error picking images:', error);
+            Alert.alert(t("app.error"), t("app.image_pick_error"));
+        }
+    };
+
+    // Function to take photo with camera
+    const takePhoto = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                    t("app.permission_required"),
+                    t("app.camera_permission_message")
+                );
+                return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                quality: 0.8,
+            });
+
+            if (!result.canceled) {
+                setSelectedImages(prev => [...prev, result.assets[0].uri]);
+            }
+        } catch (error) {
+            console.error('Error taking photo:', error);
+            Alert.alert(t("app.error"), t("app.camera_error"));
+        }
+    };
+
+    // Function to show image options
+    const showImageOptions = () => {
+        Alert.alert(
+            t("app.select_image"),
+            t("app.choose_image_source"),
+            [
+                { text: t("app.camera"), onPress: takePhoto },
+                { text: t("app.gallery"), onPress: pickImages },
+                { text: t("app.cancel"), style: "cancel" },
+            ]
+        );
+    };
+
+    // Function to remove image
+    const removeImage = (index: number) => {
+        setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Function to submit review
+    const submitReview = async () => {
+
+        if (!content.trim() && selectedOptions.length === 0) {
+            Alert.alert(t("app.error"), t("app.review_required"));
+            return;
+        }
+
+        setIsSubmittingReview(true);
+        try {
+            // Upload images to Cloudinary
+            setIsUploadingImages(true);
+            const imageUrls: string[] = [];
+
+            if (selectedImages.length > 0) {
+                const uploadPromises = selectedImages.map(uri => uploadImageToCloudinary(uri));
+                const uploadedUrls = await Promise.all(uploadPromises);
+                imageUrls.push(...uploadedUrls);
+            }
+
+            setIsUploadingImages(false);
+
+            // Prepare review data
+            const reviewData = {
+                bookingId: booking?.id || '',
+                rating: star,
+                selectedOptions,
+                comment: content.trim(),
+                images: imageUrls,
+                createdAt: serverTimestamp(),
+                userId: info?.id,
+                restaurantId: booking?.restaurantId || ''
+            };
+
+            // Save to Firestore
+            await saveReviewToFirestore(reviewData).then(async () => {
+                await updateRestaurantRating(booking?.restaurantId ?? '', star);
+                toast.success(t("app.success"), t("app.review_submitted"));
+                setIsVisible(true);
+            });
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            toast.error(t("app.error"), t("app.review_submit_error"));
+        } finally {
+            setIsSubmittingReview(false);
+        }
+    };
 
     return (
         <ScrollView style={styles.reviewContainer}>
-            <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 16 }}>
+            <View style={{ alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
+                <TouchableOpacity onPress={() => router.replace("/(profile)/order")}>
+                    <MaterialIcons name="chevron-left" size={24} />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => router.replace("/(home)")}>
                     <MaterialIcons name="home" size={24} />
                 </TouchableOpacity>
             </View>
             <View style={styles.reviewContent}>
                 <View style={styles.reviewHeader}>
-                    {
-                        loading ?
-                            <View style={styles.reviewImage} />
-                            :
-                            <Image source={{ uri: restaurant?.imageUrl }} style={styles.reviewImage} />
-                    }
+                    {loading ? (
+                        <View style={styles.reviewImage} />
+                    ) : (
+                        <Image
+                            source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4_ujwdtIghyTGEbxYYADIMUUxS2e9DBI7Juqa5E4lh3uApfs6Cah8iGfbPnar6pHQaf8&usqp=CAU' }}
+                            style={styles.reviewImage}
+                        />
+                    )}
                     <Text style={styles.reviewTitle}>{t("app.thanks_for_your_review")}</Text>
-                    <Text style={styles.reviewOrderId}>{t("app.order")} #{(bookingId ?? "").slice(6)}</Text>
+                    <Text style={styles.reviewOrderId}>{t("app.order")} #{(booking?.id ?? "").slice(0, 6)}</Text>
 
                     {/* Star Rating Display */}
                     <View style={styles.reviewStars}>
@@ -71,7 +252,9 @@ export const ReviewOrderScreen = ({ ...props }) => {
                                 styles.reviewOption,
                                 selectedOptions.includes(option) && styles.reviewOptionSelected
                             ]}
-                            onPress={() => toggleOption(option)}
+                            onPress={() => {
+                                if (!review) toggleOption(option)
+                            }}
                         >
                             <Text style={[
                                 styles.reviewOptionText,
@@ -88,46 +271,72 @@ export const ReviewOrderScreen = ({ ...props }) => {
                     style={styles.reviewTextInput}
                     placeholder={t("app.write_comment")}
                     multiline
-                    value={review}
-                    onChangeText={setReview}
+                    value={content}
+                    onChangeText={(text) => {
+                        if (!review) setContent(text)
+                    }}
                     textAlignVertical="top"
                 />
 
-                <View style={styles.imageUploadContainer}>
+                <TouchableOpacity style={styles.imageUploadContainer} onPress={() => {
+                    if (!review) showImageOptions()
+                }}>
                     <Feather name="image" size={32} color="gray" />
                     <Text style={styles.imageUploadText}>{t("app.add_image_here")}</Text>
                     <Text style={styles.imageUploadSubtext}>{t("app.upload_image")}</Text>
-                </View>
-
-                <View style={styles.imagePreviewContainer}>
-                    <View style={styles.imagePreview} />
-                    <View style={styles.imagePreview} />
-                </View>
-
-                <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={() => setIsVisible(true)}
-                >
-                    <Text style={styles.submitButtonText}>{t("app.send")}</Text>
                 </TouchableOpacity>
+
+                {/* Selected Images Preview */}
+                {selectedImages.length > 0 && (
+                    <View style={styles.imagePreviewContainer}>
+                        {selectedImages.map((uri, index) => (
+                            <View key={index} style={styles.imagePreviewWrapper}>
+                                <Image source={{ uri }} style={styles.imagePreview} />
+                                {!review && (
+                                    <TouchableOpacity
+                                        style={styles.removeImageButton}
+                                        onPress={() => removeImage(index)}
+                                    >
+                                        <MaterialIcons name="close" size={16} color="white" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                {!review && (
+                    <TouchableOpacity
+                        style={[styles.submitButton, (isSubmittingReview || isUploadingImages) && styles.submitButtonDisabled]}
+                        onPress={submitReview}
+                        disabled={isSubmittingReview || isUploadingImages}
+                    >
+                        {(isSubmittingReview || isUploadingImages) ? (
+                            <View style={styles.submitButtonLoading}>
+                                <ActivityIndicator size="small" color="white" />
+                                <Text style={styles.submitButtonText}>
+                                    {isUploadingImages ? t("app.uploading_images") : t("app.submitting")}
+                                </Text>
+                            </View>
+                        ) : (
+                            <Text style={styles.submitButtonText}>{t("app.send")}</Text>
+                        )}
+                    </TouchableOpacity>
+                )}
             </View>
 
             <Modal visible={isVisible} transparent animationType="fade">
                 <TouchableWithoutFeedback onPress={() => setIsVisible(false)}>
-                    <View style={{
-                        flex: 1,
-                        backgroundColor: 'rgba(0,0,0,0.5)', // nền mờ
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: 24
-                    }}>
+                    <View style={styles.modalBackground}>
                         <View style={styles.voucherContainer}>
-                            <Text style={styles.voucherTitle}>Voucher 10%</Text>
+                            <Text style={styles.voucherTitle}>{voucher.title}</Text>
                             <Text style={styles.voucherDescription}>
                                 {t("app.voucher_expire")}
                             </Text>
-                            <TouchableOpacity style={styles.voucherButton}
+                            <TouchableOpacity
+                                style={styles.voucherButton}
                                 onPress={onCollect}
+                                disabled={isCollecting}
                             >
                                 {isCollecting && <ActivityIndicator size="small" color="white" />}
                                 <Text style={styles.voucherButtonText}>{t("app.collect")}</Text>
@@ -137,7 +346,7 @@ export const ReviewOrderScreen = ({ ...props }) => {
                 </TouchableWithoutFeedback>
             </Modal>
         </ScrollView>
-    )
+    );
 };
 
 const styles = StyleSheet.create({
@@ -223,7 +432,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 32,
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 16,
     },
     imageUploadText: {
         color: '#6B7280',
@@ -235,8 +444,12 @@ const styles = StyleSheet.create({
     },
     imagePreviewContainer: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         gap: 8,
         marginBottom: 24,
+    },
+    imagePreviewWrapper: {
+        position: 'relative',
     },
     imagePreview: {
         width: 64,
@@ -244,21 +457,43 @@ const styles = StyleSheet.create({
         backgroundColor: '#D1D5DB',
         borderRadius: 4,
     },
-
-    // Review complete
-    reviewCompleteTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 8,
-        color: '#9CA3AF',
+    removeImageButton: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        backgroundColor: '#EF4444',
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    reviewCompleteOrderId: {
-        color: '#9CA3AF',
-        textAlign: 'center',
+    submitButton: {
+        backgroundColor: '#F97316',
+        padding: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginBottom: 16,
     },
-    reviewCompleteRating: {
-        color: '#9CA3AF',
+    submitButtonDisabled: {
+        backgroundColor: '#9CA3AF',
+    },
+    submitButtonLoading: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    submitButtonText: {
+        color: 'white',
+        fontWeight: '500',
+        fontSize: 18,
+    },
+    modalBackground: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
     },
     voucherContainer: {
         backgroundColor: '#FEF3C7',
@@ -271,6 +506,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 18,
         marginBottom: 8,
+        textAlign: 'center'
     },
     voucherDescription: {
         fontSize: 14,
@@ -285,36 +521,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flexDirection: 'row',
         gap: 8,
-        justifyContent: 'center'
+        justifyContent: 'center',
     },
     voucherButtonText: {
         color: 'white',
         fontWeight: '500',
     },
-    completeButton: {
-        backgroundColor: '#F8BBD9',
-        padding: 16,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    completeButtonText: {
-        color: '#6B7280',
-        fontWeight: '500',
-        fontSize: 18,
-    },
-
-    submitButton: {
-        backgroundColor: '#F97316',
-        padding: 16,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-
-    submitButtonText: {
-        color: 'white',
-        fontWeight: '500',
-        fontSize: 18,
-    },
-})
+});

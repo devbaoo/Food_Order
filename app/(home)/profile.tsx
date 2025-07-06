@@ -3,6 +3,7 @@ import { auth } from "@/lib/firebase-config";
 import { useAuth } from "@/providers/AuthenticatedProvider";
 import i18next from "@/services/i18next";
 import { saveLanguage } from "@/utils/language";
+import { toast } from "@/utils/toast";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
@@ -33,7 +34,8 @@ export default function ProfileScreen() {
             icon: 'card-giftcard',
             subtitle: t('app.in-progressing'),
             hasArrow: true,
-            path: ''
+            path: '',
+            isUpdating: true
         },
         {
             id: 3,
@@ -41,7 +43,8 @@ export default function ProfileScreen() {
             icon: 'card-giftcard',
             subtitle: t('app.in-progressing'),
             hasArrow: true,
-            path: ''
+            path: '',
+            isUpdating: true
         },
     ];
 
@@ -50,8 +53,9 @@ export default function ProfileScreen() {
             id: 1,
             title: t('app.help_center'),
             icon: 'help-outline',
-            subtitle: t('app.in-progressing'),
+            subtitle: t('app.help_center_subtitle'),
             hasArrow: true,
+            path: '/(profile)/help-center'
         },
         {
             id: 2,
@@ -59,13 +63,15 @@ export default function ProfileScreen() {
             icon: 'business',
             subtitle: t('app.in-progressing'),
             hasArrow: true,
+            isUpdating: true
         },
         {
             id: 3,
             title: t('app.privacy_and_policy'),
             icon: 'description',
-            subtitle: t('app.in-progressing'),
+            subtitle: t('app.privacy_and_policy'),
             hasArrow: true,
+            path: '/(profile)/policy'
         },
         {
             id: 4,
@@ -78,7 +84,11 @@ export default function ProfileScreen() {
 
     const renderMenuItem = (item: any) => (
         <TouchableOpacity key={item.id} style={styles.menuItem} onPress={() => {
-            if (item.hasArrow) router.push(item.path);
+            if (item.isUpdating) {
+                toast.info(t('app.in_progressing'), t('app.app_will_update_soon'));
+                return;
+            }
+            else if (item.hasArrow) router.push(item.path);
             else {
                 if (currentLang === "vi") changeLng("en");
                 else changeLng("vi");
@@ -103,9 +113,9 @@ export default function ProfileScreen() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>{t('app.account')}</Text>
-                <TouchableOpacity>
+                {/* <TouchableOpacity>
                     <MaterialIcons name="settings" size={24} color="#333" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

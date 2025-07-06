@@ -1,15 +1,13 @@
 import { AntDesign } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, TouchableOpacity, View, Text, Image, StyleSheet, Animated } from "react-native";
+import { ScrollView, TouchableOpacity, View, Text, Image, StyleSheet, Animated, Alert } from "react-native";
 import CartItem from "./item";
-import { formatCurrency } from "@/utils/currency";
-import screen from "@/utils/screen";
 import { router } from "expo-router";
 import { Popular } from "./popular";
+import { toast } from "@/utils/toast";
 
 export const CartScreen = ({ ...props }) => {
-    const { onLoad, cart, info, pagerRef, loading, restaurant, t } = props;
-    const [currentStep, setCurrentStep] = useState(1);
+    const { onLoad, cart, info, pagerRef, loading, restaurant, currentStep, setCurrentStep, t } = props;
     const progressAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -31,19 +29,30 @@ export const CartScreen = ({ ...props }) => {
 
     // Function to handle step progression
     const handleNextStep = () => {
-        if (currentStep < 2) {
-            setCurrentStep(currentStep + 1);
-            setTimeout(() => {
-                pagerRef.current?.setPage(1);
-            }, 500);
+        if (!info?.address || info?.address === "") {
+            toast.error(t("app.error"), t("app.please_update_your_address"));
+            return;
         }
-    };
 
-    // Function to handle step back
-    const handlePreviousStep = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
+        Alert.alert(
+            'Xác nhận đơn hàng',
+            `Bạn có chắc chắn muốn giao hàng đến địa chỉ ${info?.address} ${info?.provinceAddress}?`,
+            [
+                {
+                    text: 'Hủy',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Xác nhận',
+                    onPress: () => {
+                        if (currentStep < 2) {
+                            setCurrentStep(currentStep + 1);
+                            pagerRef.current?.setPage(1);
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     // Function to handle step click (for direct navigation)

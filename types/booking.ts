@@ -6,7 +6,15 @@ export interface Booking {
     restaurantId: string;
     items: CartItem[];
     totalPrice: number;
-    status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+    status: 'Pending' | 'Processing' | 'Shipping' | 'Delivered' | 'Cancelled';
     createdAt: string;
     restaurantName?: string | null;
+    customer?: Customer;
 };
+
+interface Customer {
+    name: string;
+    phone: string;
+    email: string;
+    address: string;
+}

@@ -4,14 +4,12 @@ import PagerView from 'react-native-pager-view';
 import { Cart, Restaurant } from '@/types';
 import { getCart } from '@/api/modules/cart';
 import { useAuth } from '@/providers/AuthenticatedProvider';
-import { ReviewOrderScreen } from '@/components/ui/cart/cart/review';
 import { CookingCartScreen } from '@/components/ui/cart/cart/cooking';
-import { DeliveryMapScreen } from '@/components/ui/cart/cart/delivery';
 import { CartScreen } from '@/components/ui/cart/cart/cart';
-import { RateOrderScreen } from '@/components/ui/cart/cart/rating';
 import { getRestaurantById } from '@/api/modules/restaurant';
 import { EmptyCart } from '@/components/ui/cart/empty';
 import { useTranslation } from 'react-i18next';
+import CheckoutScreen from '@/components/ui/cart/cart/checkout';
 
 const FoodDeliveryApp = () => {
     const [cart, setCart] = useState<Cart | null>(null);
@@ -21,8 +19,8 @@ const FoodDeliveryApp = () => {
     const pagerRef = useRef<PagerView>(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [bookingId, setBookingId] = useState<string | null>(null);
-    const [star, setStar] = useState(0);
-    const {t} = useTranslation();
+    const [currentStep, setCurrentStep] = useState(1);
+    const { t } = useTranslation();
 
     const onLoad = async () => {
         setLoading(true);
@@ -67,11 +65,13 @@ const FoodDeliveryApp = () => {
                                 info={info}
                                 pagerRef={pagerRef}
                                 loading={loading}
+                                currentStep={currentStep}
+                                setCurrentStep={setCurrentStep}
                                 t={t}
                             />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <CookingCartScreen
+                            <CheckoutScreen
                                 key="2"
                                 loading={loading}
                                 restaurant={restaurant}
@@ -79,39 +79,21 @@ const FoodDeliveryApp = () => {
                                 cart={cart}
                                 currentPage={currentPage}
                                 setBookingId={setBookingId}
+                                currentStep={currentStep}
+                                setCurrentStep={setCurrentStep}
+                                info={info}
                                 t={t}
                             />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <DeliveryMapScreen
+                            <CookingCartScreen
                                 key="3"
+                                loading={loading}
+                                restaurant={restaurant}
                                 pagerRef={pagerRef}
+                                cart={cart}
                                 currentPage={currentPage}
-                                info={info}
                                 bookingId={bookingId}
-                                t={t}
-                            />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <RateOrderScreen
-                                key="4"
-                                loading={loading}
-                                restaurant={restaurant}
-                                pagerRef={pagerRef}
-                                setStar={setStar}
-                                star={star}
-                                t={t}
-                            />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <ReviewOrderScreen
-                                key="5"
-                                loading={loading}
-                                restaurant={restaurant}
-                                pagerRef={pagerRef}
-                                star={star}
-                                bookingId={bookingId}
-                                info={info}
                                 t={t}
                             />
                         </View>

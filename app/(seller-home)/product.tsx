@@ -7,32 +7,31 @@ import {
     TouchableOpacity,
     TextInput,
     Image,
-    Modal,
     Switch,
     Alert,
     RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Category, Food } from '@/types';
+import { Food } from '@/types';
 import { createProduct, deleteProduct, getAllFoodsByRestaurantId, updateProduct } from '@/api/modules/food';
 import { useAuth } from '@/providers/AuthenticatedProvider';
 import BackgroundLoading from '@/components/loading/background';
 import { useTranslation } from 'react-i18next';
-import { doc, GeoPoint } from '@firebase/firestore';
-import { getAllCategories } from '@/api/modules/category';
+import { doc } from '@firebase/firestore';
 import { firestore } from '@/lib/firebase-config';
 import { formatCurrency } from '@/utils/currency';
+import { AddProductModal } from '@/components/modal/product/add';
 
 type FoodFormData = {
     name: string;
     price: string;
     description: string;
     category: string;
+    imageUrl?: string;
 };
 
 export default function ProductScreen() {
     const { restaurant } = useAuth();
-    const [categories, setCategories] = useState<Category[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [showAddModal, setShowAddModal] = useState(false);
@@ -43,7 +42,8 @@ export default function ProductScreen() {
         name: '',
         price: '',
         description: '',
-        category: ''
+        category: '',
+        imageUrl: ''
     });
 
     const [products, setProducts] = useState<Food[]>([]);
@@ -51,17 +51,10 @@ export default function ProductScreen() {
     const onLoad = async () => {
         setLoading(true);
         try {
-            const [foods, categories] = await Promise.all([
-                getAllFoodsByRestaurantId(restaurant?.id ?? ""),
-                getAllCategories()
-            ]);
+            const foods = await getAllFoodsByRestaurantId(restaurant?.id ?? "");
 
             if (foods && foods.length > 0) {
                 setProducts(foods);
-            }
-
-            if (categories && categories.length > 0) {
-                setCategories(categories);
             }
         } catch (err) {
 
@@ -79,36 +72,20 @@ export default function ProductScreen() {
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
             const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesCategory = selectedCategory === 'All';
+            const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
     }, [products, searchQuery, selectedCategory]);
 
-    // Optimized form handlers using useCallback
-    const handleNameChange = useCallback((text: string) => {
-        setFormData(prev => ({ ...prev, name: text }));
-    }, []);
-
-    const handlePriceChange = useCallback((text: string) => {
-        setFormData(prev => ({ ...prev, price: text }));
-    }, []);
-
-    const handleDescriptionChange = useCallback((text: string) => {
-        setFormData(prev => ({ ...prev, description: text }));
-    }, []);
-
-    const handleCategoryChange = useCallback((categoryId: string) => {
-        setFormData(prev => ({ ...prev, category: categoryId }));
-    }, []);
-
-    const resetForm = useCallback(() => {
+    const resetForm = () => {
         setFormData({
             name: '',
             price: '',
             description: '',
-            category: ''
+            category: '',
+            imageUrl: ''
         });
-    }, []);
+    }
 
     const handleAddProduct = useCallback(async () => {
         if (!formData.name || !formData.price) {
@@ -137,7 +114,8 @@ export default function ProductScreen() {
             name: product.name,
             price: product.basePrice.toString(),
             description: product.description,
-            category: product.category
+            category: product.category,
+            imageUrl: product.imageUrl
         });
         setShowAddModal(true);
     }, []);
@@ -150,7 +128,6 @@ export default function ProductScreen() {
 
         const product = {
             ...formData,
-            imageUrl: editingProduct.imageUrl,
             basePrice: Number(formData.price ?? 0),
             restaurantId: restaurant?.id,
             category: doc(firestore, 'categories', formData.category)
@@ -195,11 +172,11 @@ export default function ProductScreen() {
         );
     }, []);
 
-    const handleCloseModal = useCallback(() => {
+    const handleCloseModal = () => {
         setShowAddModal(false);
         setEditingProduct(null);
         resetForm();
-    }, [resetForm]);
+    };
 
     const ProductCard = React.memo(({ product }: any) => (
         <View style={styles.productCard}>
@@ -266,7 +243,7 @@ export default function ProductScreen() {
                             styles.availabilityText,
                             { color: product ? '#38A169' : '#E53E3E' }
                         ]}>
-                            {product ? 'Available' : 'Unavailable'}
+                            {product ? 'Có sẵn' : 'Không có sẵn'}
                         </Text>
                     </View>
 
@@ -281,99 +258,6 @@ export default function ProductScreen() {
         </View>
     ));
 
-    const AddProductModal = () => (
-        <Modal
-            visible={showAddModal}
-            animationType="slide"
-        >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalHeader}>
-                    <TouchableOpacity onPress={handleCloseModal}>
-                        <Text style={styles.cancelButton}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.modalTitle}>
-                        {editingProduct ? 'Edit Product' : 'Add New Product'}
-                    </Text>
-                    <TouchableOpacity
-                        onPress={editingProduct ? handleUpdateProduct : handleAddProduct}
-                    >
-                        <Text style={styles.saveButton}>
-                            {editingProduct ? 'Update' : 'Save'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                <ScrollView
-                    style={styles.modalContent}
-                    keyboardShouldPersistTaps="handled"
-                >
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Product Name *</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={formData.name}
-                            onChangeText={handleNameChange}
-                            placeholder="Enter product name"
-                        />
-                    </View>
-
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Description *</Text>
-                        <TextInput
-                            style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
-                            value={formData.description}
-                            onChangeText={handleDescriptionChange}
-                            placeholder="Enter description"
-                            multiline
-                            numberOfLines={4}
-                        />
-                    </View>
-
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Price *</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={formData.price}
-                            onChangeText={handlePriceChange}
-                            placeholder="0.00"
-                            keyboardType="numeric"
-                        />
-                    </View>
-
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Category</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <View style={styles.categorySelector}>
-                                {categories.map((category) => (
-                                    <TouchableOpacity
-                                        key={category.id}
-                                        style={[
-                                            styles.categoryOption,
-                                            formData.category === category.id && styles.selectedCategory
-                                        ]}
-                                        onPress={() => handleCategoryChange(category.id)}
-                                    >
-                                        <Text style={[
-                                            styles.categoryOptionText,
-                                            formData.category === category.id && styles.selectedCategoryText
-                                        ]}>
-                                            {category.name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </ScrollView>
-                    </View>
-
-                    <TouchableOpacity style={styles.imageUpload}>
-                        <Ionicons name="camera" size={24} color="#718096" />
-                        <Text style={styles.imageUploadText}>Add Product Image</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-            </View>
-        </Modal>
-    );
-
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -381,7 +265,7 @@ export default function ProductScreen() {
                 <TouchableOpacity style={styles.backButton}>
 
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Products</Text>
+                <Text style={styles.headerTitle}>Sản phẩm</Text>
                 <TouchableOpacity
                     style={styles.addButton}
                     onPress={() => setShowAddModal(true)}
@@ -396,7 +280,7 @@ export default function ProductScreen() {
                     <Ionicons name="search" size={20} color="#718096" />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder="Search products..."
+                        placeholder="Tìm kiếm món ăn..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
@@ -411,7 +295,7 @@ export default function ProductScreen() {
                     style={styles.categoryFilter}
                     contentContainerStyle={{ alignItems: "center" }}
                 >
-                    {categories.map((category) => (
+                    {restaurant?.categories?.map((category) => (
                         <TouchableOpacity
                             key={category.id}
                             style={[
@@ -451,11 +335,11 @@ export default function ProductScreen() {
             >
                 <View style={styles.productsHeader}>
                     <Text style={styles.productsCount}>
-                        {filteredProducts.length} Products
+                        {filteredProducts.length} sản phẩm
                     </Text>
                     <TouchableOpacity style={styles.sortButton}>
                         <Ionicons name="funnel" size={16} color="#718096" />
-                        <Text style={styles.sortText}>Sort</Text>
+                        <Text style={styles.sortText}>Sắp xếp</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -466,15 +350,28 @@ export default function ProductScreen() {
                 {filteredProducts.length === 0 && (
                     <View style={styles.emptyState}>
                         <Ionicons name="cube-outline" size={64} color="#CBD5E0" />
-                        <Text style={styles.emptyStateText}>No products found</Text>
+                        <Text style={styles.emptyStateText}>Không có sản phẩm nào</Text>
                         <Text style={styles.emptyStateSubtext}>
-                            Try adjusting your search or filters
+                            Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn
                         </Text>
                     </View>
                 )}
             </ScrollView>
 
-            <AddProductModal />
+            <AddProductModal
+                showAddModal={showAddModal}
+                handleCloseModal={handleCloseModal}
+                editingProduct={editingProduct}
+                handleUpdateProduct={handleUpdateProduct}
+                handleAddProduct={handleAddProduct}
+                formData={formData}
+                handleNameChange={(text) => setFormData(prev => ({ ...prev, name: text }))}
+                handleDescriptionChange={(text) => setFormData(prev => ({ ...prev, description: text }))}
+                handlePriceChange={(text) => setFormData(prev => ({ ...prev, price: text }))}
+                categories={restaurant?.categories}
+                handleCategoryChange={(text) => setFormData(prev => ({ ...prev, category: text }))}
+                handleImageUrlChange={(text) => setFormData(prev => ({ ...prev, imageUrl: text }))}
+            />
 
             {loading && <BackgroundLoading />}
         </View>
@@ -518,7 +415,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 25,
         paddingHorizontal: 15,
-        paddingVertical: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -530,6 +426,7 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         fontSize: 16,
         color: '#2D3748',
+        height: 40
     },
     categoryFilter: {
         paddingHorizontal: 15,
@@ -707,105 +604,5 @@ const styles = StyleSheet.create({
         color: '#718096',
         marginTop: 4,
     },
-    modalContainer: {
-        flex: 1,
-        backgroundColor: '#F8F9FA',
-    },
-    modalHeader: {
-        backgroundColor: 'white',
-        paddingTop: 20,
-        paddingBottom: 20,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
-    },
-    cancelButton: {
-        fontSize: 16,
-        color: '#718096',
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#2D3748',
-    },
-    saveButton: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#2C7A7B',
-    },
-    modalContent: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    formGroup: {
-        marginBottom: 20,
-    },
-    label: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#2D3748',
-        marginBottom: 8,
-    },
-    input: {
-        backgroundColor: 'white',
-        borderRadius: 8,
-        paddingHorizontal: 15,
-        paddingVertical: 12,
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-    },
-    textArea: {
-        height: 100,
-        textAlignVertical: 'top',
-    },
-    categorySelector: {
-        flexDirection: 'row',
-        paddingVertical: 5,
-    },
-    categoryOption: {
-        backgroundColor: 'white',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        marginRight: 10,
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-    },
-    selectedCategory: {
-        backgroundColor: '#2C7A7B',
-        borderColor: '#2C7A7B',
-    },
-    categoryOptionText: {
-        fontSize: 14,
-        color: '#718096',
-        fontWeight: '500',
-    },
-    selectedCategoryText: {
-        color: 'white',
-    },
-    switchContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    imageUpload: {
-        backgroundColor: 'white',
-        borderRadius: 8,
-        padding: 40,
-        alignItems: 'center',
-        marginBottom: 20,
-        borderWidth: 2,
-        borderColor: '#E2E8F0',
-        borderStyle: 'dashed',
-    },
-    imageUploadText: {
-        fontSize: 16,
-        color: '#718096',
-        marginTop: 8,
-    },
+
 });

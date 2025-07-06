@@ -30,17 +30,20 @@ export const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
                             <View style={styles.stars}>
                                 {renderStars(restaurant.rating)}
                             </View>
-                            <Text style={styles.ratingText}>{restaurant.rating}</Text>
+                            <Text style={styles.ratingText}>{restaurant.rating.toLocaleString(undefined, {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2
+                            })}</Text>
                         </View>
                         <View style={styles.statItem}>
-                            <Text style={styles.statLabel}>Rating Count</Text>
+                            <Text style={styles.statLabel}>Lượt đánh giá</Text>
                             <Text style={styles.statNumber}>{restaurant.ratingCount}</Text>
                         </View>
                     </View>
                 </View>
 
                 <View style={styles.favoriteItems}>
-                    <Text style={styles.favoriteLabel}>Address: {restaurant.address}</Text>
+                    <Text style={styles.favoriteLabel}>Địa chỉ: {restaurant.address}</Text>
                 </View>
             </View>
         </TouchableOpacity>

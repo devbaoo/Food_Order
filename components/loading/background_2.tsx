@@ -9,7 +9,7 @@ const BackgroundLoading2 = ({ style }: { style?: ViewStyle }) => {
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: "white",
+                backgroundColor: "rgba(0, 0, 0, 0.1)",
             }, StyleSheet.absoluteFillObject, style]}
         >
             <ActivityIndicator size="large" color="red" />

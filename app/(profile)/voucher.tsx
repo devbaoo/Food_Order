@@ -11,10 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Voucher } from '@/types/voucher';
-import { getAllVouchers } from '@/api/modules/voucher';
+import { deleteVoucherAsync, getAllVouchers } from '@/api/modules/voucher';
 import { useAuth } from '@/providers/AuthenticatedProvider';
 import BackgroundLoading2 from '@/components/loading/background_2';
 import { useTranslation } from 'react-i18next';
+import moment from 'moment';
+import { formatCurrency } from '@/utils/currency';
 
 const VoucherManagement = () => {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
@@ -51,24 +53,29 @@ const VoucherManagement = () => {
 
   const deleteVoucher = (id: any) => {
     Alert.alert(
-      'Delete Voucher',
-      'Are you sure you want to delete this voucher?',
+      'Xóa mã giảm giá',
+      'Bạn có chắc chắn muốn xóa phiếu giảm giá này không?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Hủy', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Xóa',
           style: 'destructive',
-          onPress: () => setVouchers(vouchers.filter(v => v.id !== id))
+          onPress: async () => {
+            const isSuccess = await deleteVoucherAsync(id);
+            if(isSuccess) {
+              await onLoad();
+            }
+          }
         }
       ]
     );
   };
 
   const renderVoucherItem = ({ item }: any) => {
-    const isExpired = new Date(item.expiryDate) < new Date();
+    const isExpired = moment(item.expiryDate, "DD-MM-YYYY").hour(12).isBefore(moment());
 
     return (
-      <View style={[styles.voucherCard, !item.isActive && styles.inactiveCard]}>
+      <View style={[styles.voucherCard, (!item.isActive || isExpired) && styles.inactiveCard]}>
         <View style={styles.voucherHeader}>
           <View style={styles.voucherInfo}>
             <Text style={styles.voucherCode}>{item.code}</Text>
@@ -94,7 +101,7 @@ const VoucherManagement = () => {
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>{t("app.order_min")}:</Text>
-            <Text style={styles.detailValue}>${item.minAmount}</Text>
+            <Text style={styles.detailValue}>{formatCurrency(item.minAmount)}</Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>{t("app.expire_at")}:</Text>
