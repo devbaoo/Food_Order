@@ -1,12 +1,44 @@
 import useOrderNotification from "@/hooks/useOrderNotification";
 import { useAuth } from "@/providers/AuthenticatedProvider";
+import { registerForPushNotificationsAsync } from "@/utils/notification";
 import { Stack } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+    }),
+});
 
 const AppNavigator: React.FC = () => {
-    const { restaurant } = useAuth();
+    const { restaurant, setToken } = useAuth();
 
     useOrderNotification(restaurant?.id);
+
+    useEffect(() => {
+        registerForPushNotificationsAsync().then(token => {
+            if (token) setToken(token);
+        });
+
+        // Lắng nghe notification đến khi app đang mở
+        const subscription = Notifications.addNotificationReceivedListener(notification => {
+            console.log('Notification received:', notification);
+        });
+
+        const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+            console.log(response);
+        });
+
+        return () => {
+            subscription.remove();
+            responseListener.remove();
+        };
+    }, []);
 
     return (
         <Stack screenOptions={{ headerShown: false }}>

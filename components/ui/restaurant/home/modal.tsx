@@ -82,19 +82,18 @@ const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: {
                 <Text style={styles.headerTitle}>{t("app.custom")}</Text>
             </View>
 
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-            >
+            {/* Main Content - Remove KeyboardAvoidingView wrapper */}
+            <View style={styles.mainContent}>
                 <ScrollView
                     style={styles.content}
+                    contentContainerStyle={styles.contentContainer}
                     showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    nestedScrollEnabled={true}
+                    keyboardShouldPersistTaps="always"
+                    bounces={true}
+                    scrollEnabled={true}
                 >
                     {/* Product Image */}
                     <View style={styles.imageContainer}>
-                        {/* Replace this View with your actual Image component */}
                         <Image source={{ uri: selectedFood?.imageUrl }} style={styles.placeholderImage} />
                     </View>
 
@@ -127,6 +126,7 @@ const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: {
                                 key={index}
                                 style={styles.optionItem}
                                 onPress={() => setSelectedSize(option.label)}
+                                activeOpacity={0.7}
                             >
                                 <View style={styles.optionLeft}>
                                     <View style={styles.radioButton}>
@@ -177,6 +177,7 @@ const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: {
                                 key={index}
                                 style={styles.productItem}
                                 onPress={() => { }}
+                                activeOpacity={0.7}
                             >
                                 <View style={styles.productContent}>
                                     <Text style={styles.productText}>{product}</Text>
@@ -190,10 +191,13 @@ const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: {
                         ))}
                     </View>
                 </ScrollView>
-            </KeyboardAvoidingView>
+            </View>
 
             {/* Bottom Section */}
-            <View style={styles.bottomSection}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={styles.bottomSection}
+            >
                 {/* Quantity Selector */}
                 <View style={styles.quantityContainer}>
                     <TouchableOpacity
@@ -220,7 +224,7 @@ const FoodOrderPageModal = ({ visible, onClose, selectedFood, t }: {
                     {loading && <ActivityIndicator size="small" color="white" />}
                     <Text style={styles.addToCartText}>{t("app.add_to_cart")}</Text>
                 </TouchableOpacity>
-            </View>
+            </KeyboardAvoidingView>
         </Modal>
     );
 };
@@ -229,7 +233,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        pointerEvents: "auto"
     },
     header: {
         flexDirection: 'row',
@@ -247,8 +250,14 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#333',
     },
+    mainContent: {
+        flex: 1,
+    },
     content: {
         flex: 1,
+    },
+    contentContainer: {
+        paddingBottom: 20,
     },
     imageContainer: {
         height: 200,
@@ -428,7 +437,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     inputContainer: {
-        marginBottom: 20,
+   
     },
     inputLabel: {
         fontSize: 16,
@@ -443,9 +452,7 @@ const styles = StyleSheet.create({
         color: '#333',
         borderWidth: 1,
         borderColor: '#e0e0e0',
-        minHeight: 100,
     },
-
     productItem: {
         borderWidth: 1,
         borderColor: '#D9D9D9',

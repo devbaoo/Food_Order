@@ -343,7 +343,7 @@ export default function MomePolicyPage() {
                         styles.navButtonText,
                         activeSection === 'privacy' && styles.navButtonTextActive
                     ]}>
-                        Privacy Policy
+                        Chính sách bảo mật
                     </Text>
                 </TouchableOpacity>
 
@@ -358,7 +358,7 @@ export default function MomePolicyPage() {
                         styles.navButtonText,
                         activeSection === 'terms' && styles.navButtonTextActive
                     ]}>
-                        Terms of Service
+                        Điều khoản dịch vụ
                     </Text>
                 </TouchableOpacity>
             </View>

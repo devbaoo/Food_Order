@@ -292,14 +292,16 @@ export default function HealthSurveyForm() {
             {
                 currentStep > 0 && (
                     <View style={styles.header}>
-                        <TouchableOpacity onPress={() => router.replace("/(menu-ai)/chat")}>
+                        <TouchableOpacity onPress={() => prevStep()}>
                             <Ionicons
                                 name="arrow-back"
                                 size={24}
                                 color={currentStep === 0 ? "#ccc" : "#333"}
                             />
                         </TouchableOpacity>
-                        <Text style={styles.skip}>{t("app.skip")}</Text>
+                        <TouchableOpacity onPress={() => router.replace("/(menu-ai)/chat")}>
+                            <Text style={styles.skip}>{t("app.skip")}</Text>
+                        </TouchableOpacity>
                     </View>
                 )
             }

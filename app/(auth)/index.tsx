@@ -20,6 +20,8 @@ import { getLanguage, saveLanguage } from '@/utils/language';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { toast } from '@/utils/toast';
+import { checkAndSaveTokenForUser } from '@/api/modules/notification';
+import { registerForPushNotificationsAsync } from '@/utils/notification';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -29,7 +31,7 @@ GoogleSignin.configure({
 });
 
 export default () => {
-    const { setUser, setCart, setInfo, user } = useAuth();
+    const { setUser, setCart, setInfo, user, token, setToken } = useAuth();
     const [loading, setLoading] = useState(true);
     const [googleLoading, setGoogleLoading] = useState(false);
     const { t } = useTranslation();
@@ -45,21 +47,37 @@ export default () => {
     const checkIsInformationExists = async (id: string): Promise<Info | null> => {
         const docRef = doc(firestore, 'users', id);
         const docSnap = await getDoc(docRef);
+        const data = docSnap.data();
 
-        if (docSnap.exists()) {
-            return {
-                id: docSnap.id,
-                name: docSnap.data()?.name ?? '',
-                avatar: docSnap.data()?.avatar ?? '',
-                phone: docSnap.data()?.phone ?? '',
-                address: docSnap.data()?.address ?? '',
-                provinceAddress: docSnap.data()?.provinceAddress ?? '',
-                role: docSnap.data()?.role ?? 'user',
-                location: docSnap.data()?.location ?? { latitude: 0, longitude: 0 }
-            };
-        } else {
+        if (!docSnap.exists()) {
             return null;
         }
+
+        let finalToken = token;
+
+        if (data?.role === "seller") {
+            if (!finalToken) {
+                finalToken = await registerForPushNotificationsAsync();
+                if (finalToken) {
+                    setToken(finalToken); // lưu vào local state
+                }
+            }
+
+            if (finalToken) {
+                await checkAndSaveTokenForUser(id, finalToken);
+            }
+        }
+
+        return {
+            id: docSnap.id,
+            name: data?.name ?? '',
+            avatar: data?.avatar ?? '',
+            phone: data?.phone ?? '',
+            address: data?.address ?? '',
+            provinceAddress: data?.provinceAddress ?? '',
+            role: data?.role ?? 'user',
+            location: data?.location ?? { latitude: 0, longitude: 0 }
+        };
     }
 
     useEffect(() => {

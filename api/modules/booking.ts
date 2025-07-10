@@ -142,6 +142,7 @@ export const getAllBookings = async (userId?: string) => {
 
     for (const docSnap of querySnapshot.docs) {
       const data = docSnap.data();
+      const bookingId = docSnap.id;
       const userId = data.userId ?? "";
 
       const restaurantId = data?.restaurantId ?? "";
@@ -175,8 +176,21 @@ export const getAllBookings = async (userId?: string) => {
         })
       );
 
+      // 🔹 Kiểm tra payment của booking
+      let canCancel = false;
+      const paymentQuery = query(
+        collection(firestore, "payments"),
+        where("bookingId", "==", bookingId)
+      );
+      const paymentSnapshot = await getDocs(paymentQuery);
+      if (!paymentSnapshot.empty) {
+        const paymentDoc = paymentSnapshot.docs[0];
+        const paymentData = paymentDoc.data();
+        canCancel = paymentData.status !== "paid";
+      }
+
       bookings.push({
-        id: docSnap.id,
+        id: bookingId,
         userId: data?.userId ?? "",
         restaurantId,
         restaurantName: restaurant?.name ?? "Unknown",
@@ -184,6 +198,7 @@ export const getAllBookings = async (userId?: string) => {
         status: data?.status ?? "Pending",
         createdAt: data?.createdAt ?? "",
         items: itemsWithFoodInfo,
+        canCancel,
         customer: {
           name: user?.name ?? "",
           phone: user?.phone ?? "",

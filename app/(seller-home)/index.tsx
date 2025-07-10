@@ -17,7 +17,7 @@ import { getRestaurantByUserId } from '@/api/modules/restaurant';
 import { router } from 'expo-router';
 import BackgroundLoading from '@/components/loading/background';
 import { useTranslation } from 'react-i18next';
-import { Booking, Food } from '@/types';
+import { Booking, Food, Restaurant } from '@/types';
 import { getBookingByRestaurantId } from '@/api/modules/booking';
 import { getAllFoodsByRestaurantId } from '@/api/modules/food';
 import moment from 'moment';
@@ -39,12 +39,12 @@ export default () => {
     const [selectedPeriod, setSelectedPeriod] = useState<Period>('today');
     const { t } = useTranslation();
 
-    const onLoad = async () => {
+    const onLoad = async (restaurant: Restaurant) => {
         setDashboardLoading(true);
         try {
             const [bookings, foods] = await Promise.all([
-                getBookingByRestaurantId(restaurant?.id ?? ""),
-                getAllFoodsByRestaurantId(restaurant?.id ?? "")
+                getBookingByRestaurantId(restaurant.id),
+                getAllFoodsByRestaurantId(restaurant.id)
             ])
 
             setBookings(bookings);
@@ -64,7 +64,10 @@ export default () => {
                 }
                 else {
                     setRestaurant(result);
+                    await onLoad(result);
                 }
+            } catch (error) {
+                console.log(error);
             }
             finally {
                 setTimeout(() => setLoading(false), 1000);
@@ -75,10 +78,6 @@ export default () => {
     useEffect(() => {
         checkRestaurant();
     }, []);
-
-    useEffect(() => {
-        if (restaurant) onLoad();
-    }, [restaurant]);
 
     // Enhanced stats with period-based data
     type Period = 'today' | 'week' | 'month';
@@ -105,8 +104,8 @@ export default () => {
                 revenue: bookings
                     .filter(x => moment(x.createdAt).isSame(moment(), 'month') && x.status === "Delivered")
                     .reduce((sum, order) => sum + order.totalPrice, 0),
-                visitors: 1250,
-                products: bookings.filter(x => moment(x.createdAt).isSame(moment(), 'month')).length
+                visitors: bookings.filter(x => moment(x.createdAt).isSame(moment(), 'month')).length,
+                products: foods.length
             },
         };
         return statsData[period] || statsData.today;
@@ -201,7 +200,7 @@ export default () => {
             </View>
             <View style={styles.bestSellerInfo}>
                 <Text style={styles.bestSellerName}>{item.name}</Text>
-                <Text style={styles.bestSellerStats}>{12} sold • {formatCurrency(item.basePrice)}</Text>
+                <Text style={styles.bestSellerStats}>{12} đã bán • {formatCurrency(item.basePrice)}</Text>
             </View>
             <View style={styles.bestSellerTrend}>
                 <Ionicons
@@ -219,7 +218,7 @@ export default () => {
 
         return (
             <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>Revenue Overview</Text>
+                <Text style={styles.chartTitle}>Tổng quan về doanh thu</Text>
                 <View style={styles.chart}>
                     {data.map((item, index) => {
                         const height = (item.revenue / maxRevenue) * 150;
@@ -299,11 +298,11 @@ export default () => {
                         <Text style={styles.welcomeText}>{t("app.welcome_back")}</Text>
                         <Text style={styles.storeName}>{restaurant?.name}</Text>
                     </View>
-                    <TouchableOpacity style={styles.notificationButton}>
+                    <TouchableOpacity style={styles.notificationButton} onPress={() => router.push('/(notification)')}>
                         <Ionicons name="notifications-outline" size={24} color="white" />
-                        <View style={styles.notificationBadge}>
+                        {/* <View style={styles.notificationBadge}>
                             <Text style={styles.badgeText}>3</Text>
-                        </View>
+                        </View> */}
                     </TouchableOpacity>
                 </View>
                 <PeriodSelector />
@@ -313,12 +312,23 @@ export default () => {
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={false} onRefresh={onLoad} />
+                    <RefreshControl refreshing={false} onRefresh={() => {
+                        if (restaurant) {
+                            onLoad(restaurant);
+                        }
+                    }} />
                 }
             >
                 {/* Today's Stats */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t("app.today_overview")}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15, }}>
+                        <Text style={styles.sectionTitle}>{t("app.today_overview")}</Text>
+                        <TouchableOpacity onPress={() => {
+                            if (restaurant) onLoad(restaurant)
+                        }}>
+                            <Text style={{ color: '#9929EA' }}>Làm mới</Text>
+                        </TouchableOpacity>
+                    </View>
                     <View style={styles.statsGrid}>
                         <StatCard
                             title={t("app.order")}
@@ -511,7 +521,7 @@ export default () => {
                 </View>
             </Modal>
 
-            {loading && <BackgroundLoading />}
+            {/* {loading && <BackgroundLoading />} */}
         </View>
     );
 };
@@ -598,7 +608,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#2D3748',
-        marginBottom: 15,
     },
     sectionHeader: {
         flexDirection: 'row',

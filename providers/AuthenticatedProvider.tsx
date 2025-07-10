@@ -13,6 +13,8 @@ interface AuthenticatedContextProps {
   setIsChecked: React.Dispatch<React.SetStateAction<boolean>>;
   restaurant: Restaurant | null;
   setRestaurant: React.Dispatch<React.SetStateAction<Restaurant | null>>;
+  token: string | null;
+  setToken: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const AuthenticatedContext = createContext<AuthenticatedContextProps | undefined>(undefined);
@@ -25,11 +27,25 @@ export const AuthenticatedProvider: React.FC<AuthenticatedProviderProps> = ({ ch
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<Cart | null>(null);
   const [info, setInfo] = useState<Info | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isChecked, setIsChecked] = useState(false);
 
   return (
-    <AuthenticatedContext.Provider value={{ user, setUser, cart, setCart, info, setInfo, isChecked, setIsChecked, restaurant, setRestaurant }}>
+    <AuthenticatedContext.Provider value={{
+      user,
+      setUser,
+      cart,
+      setCart,
+      info,
+      setInfo,
+      isChecked,
+      setIsChecked,
+      restaurant,
+      setRestaurant,
+      token,
+      setToken
+    }}>
       {children}
     </AuthenticatedContext.Provider>
   );

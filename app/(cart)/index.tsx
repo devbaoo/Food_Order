@@ -10,11 +10,12 @@ import { getRestaurantById } from '@/api/modules/restaurant';
 import { EmptyCart } from '@/components/ui/cart/empty';
 import { useTranslation } from 'react-i18next';
 import CheckoutScreen from '@/components/ui/cart/cart/checkout';
+import BackgroundLoading2 from '@/components/loading/background_2';
 
 const FoodDeliveryApp = () => {
     const [cart, setCart] = useState<Cart | null>(null);
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-    const { info } = useAuth();
+    const { info, token } = useAuth();
     const [loading, setLoading] = useState(true);
     const pagerRef = useRef<PagerView>(null);
     const [currentPage, setCurrentPage] = useState(0);
@@ -42,6 +43,8 @@ const FoodDeliveryApp = () => {
     useEffect(() => {
         onLoad();
     }, [info]);
+
+    if(loading) return <View style={styles.flex1BgGray50}><BackgroundLoading2 /></View>;
 
     return (
         <View style={styles.appContainer}>
@@ -83,6 +86,7 @@ const FoodDeliveryApp = () => {
                                 setCurrentStep={setCurrentStep}
                                 info={info}
                                 t={t}
+                                token={token}
                             />
                         </View>
                         <View style={{ flex: 1 }}>

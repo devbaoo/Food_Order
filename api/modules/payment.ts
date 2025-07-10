@@ -102,6 +102,79 @@ function sortObject(obj: any) {
     return sorted;
 }
 
+export const createPaymentUrlPayOS = async (formValue: {
+    orderCode: number;
+    amount: number;
+    description: string;
+    buyerName: string;
+    buyerEmail: string;
+    buyerPhone: string;
+    buyerAddress: string;
+    items: {
+        name: string;
+        quantity: number;
+        price: number;
+    }[];
+}) => {
+    try {
+        const checksumKey = process.env.EXPO_PUBLIC_CHECKSUM_KEY_PAYOS as string;
+        const descData = `amount=${formValue.amount}&cancelUrl=http://localhost:3000/cancel&description=${formValue.description}&orderCode=${formValue.orderCode}&returnUrl=http://localhost:3000/return`;
+
+        const signature = CryptoJS.HmacSHA256(descData, checksumKey).toString(CryptoJS.enc.Hex);
+
+        const body = {
+            ...formValue,
+            signature,
+            returnUrl: 'http://localhost:3000/return',
+            cancelUrl: 'http://localhost:3000/cancel',
+            expiredAt: Math.floor(moment().add(15, 'minutes').unix()),
+        }
+
+        const response = await fetch('https://api-merchant.payos.vn/v2/payment-requests', {
+            method: 'POST',
+            headers: {
+                'x-client-id': process.env.EXPO_PUBLIC_CLIENT_ID_PAYOS as string,
+                'x-api-key': process.env.EXPO_PUBLIC_API_KEY_PAYOS as string,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data?.desc || 'Lỗi tạo QR');
+        }
+
+        return data;
+    } catch (error: any) {
+        throw error;
+    }
+}
+
+export const checkPayment = async (id: string) => {
+    try {
+        const response = await fetch(`https://api-merchant.payos.vn/v2/payment-requests/${id}`, {
+            method: 'GET',
+            headers: {
+                'x-client-id': process.env.EXPO_PUBLIC_CLIENT_ID_PAYOS as string,
+                'x-api-key': process.env.EXPO_PUBLIC_API_KEY_PAYOS as string,
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data?.desc || 'Lỗi tạo QR');
+        }
+
+        return data;
+    } catch (error: any) {
+        throw error;
+    }
+}
+
 export const savePaymentHistory = async ({
     userId,
     bookingId,

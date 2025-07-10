@@ -32,7 +32,7 @@ const OrdersScreen = () => {
 
     const handleNotificationPress = () => {
         // Handle notification press
-        console.log('Notification pressed');
+        router.push('/(notification)');
     };
 
     const onLoad = async () => {
@@ -61,9 +61,9 @@ const OrdersScreen = () => {
                 <TouchableOpacity onPress={handleNotificationPress} style={styles.notificationButton}>
                     <MaterialIcons name="notifications-none" size={24} color="#333" />
                     {/* Notification badge */}
-                    <View style={styles.notificationBadge}>
+                    {/* <View style={styles.notificationBadge}>
                         <Text style={styles.badgeText}>1</Text>
-                    </View>
+                    </View> */}
                 </TouchableOpacity>
             </View>
 

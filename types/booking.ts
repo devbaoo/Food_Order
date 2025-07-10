@@ -10,6 +10,7 @@ export interface Booking {
     createdAt: string;
     restaurantName?: string | null;
     customer?: Customer;
+    canCancel?: boolean; // Indicates if the booking can be cancelled
 };
 
 interface Customer {

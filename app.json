@@ -20,6 +20,8 @@
         "foregroundImage": "./assets/images/logo/logo.png",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile": "./google-services.json",
+      "useNextNotificationsApi": true,
       "package": "com.dk.foodorder",
       "versionCode": 1,
       "permissions": [
@@ -36,13 +38,7 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/background/background_full.png",
-          "resizeMode": "contain"
-        }
-      ],
+      "expo-notifications",
       [
         "expo-av",
         {

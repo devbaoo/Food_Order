@@ -106,7 +106,7 @@ export const renderBookingItem = ({
             </View>
             <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
 
-            {(item.status === 'Pending' || item.status === 'Processing') && (
+            {(item.status === 'Pending' && item.canCancel) && (
                 <TouchableOpacity
                     style={styles.cancelButton}
                     onPress={() => cancelBooking(item.id)}

@@ -10,36 +10,67 @@ import {
     Share,
     Linking,
     Dimensions,
-    Platform,
     ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { createPaymentUrlVietQR } from '@/api/modules/payment';
+import { checkPayment, createPaymentUrlPayOS, savePaymentHistory } from '@/api/modules/payment';
 import { router, useLocalSearchParams } from 'expo-router';
 import { formatCurrency } from '@/utils/currency';
+import { useAuth } from '@/providers/AuthenticatedProvider';
+import { getTimestampLong } from '@/utils/date';
+import { toast } from '@/utils/toast';
+import { usePaymentStore } from '@/stores/paymentStore';
+import { createBookingsFromCart } from '@/api/modules/booking';
+import { useTranslation } from 'react-i18next';
+import { checkAndSendNotify } from '@/api/modules/notification';
 
 const { width } = Dimensions.get('window');
 
 export default function QRPaymentScreen() {
-    const [qrDataUrl, setQrDataUrl] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
     const [paymentCode, setPaymentCode] = useState('');
-    const { amount, cartSF, paymentType } = useLocalSearchParams();
+    const [paymentUrl, setPaymentUrl] = useState<string>('');
+    const { amount, cartSF } = useLocalSearchParams();
+    const [paymentLinkId, setPaymentLinkId] = useState<string | null>(null);
+    const { setPaymentStatus } = usePaymentStore();
+    const { t } = useTranslation();
+    const { info } = useAuth();
 
     // Call VietQR API to generate QR code
     const generateQRCode = async () => {
         try {
             setLoading(true);
 
-            const result = await createPaymentUrlVietQR(Number(amount ?? 0), `Thanh toán hóa đơn mã ${JSON.parse(cartSF as string)?.id?.slice(0, 6)}`)
+            const result = await createPaymentUrlPayOS({
+                orderCode: getTimestampLong(),
+                amount: Number(amount) || 0,
+                description: `Don hang - ${JSON.parse(cartSF as string)?.id?.slice(0, 6)}`,
+                buyerName: info?.name ?? '',
+                buyerEmail: '',
+                buyerPhone: info?.phone ?? '',
+                buyerAddress: info?.address ?? '',
+                items: JSON.parse(cartSF as string)?.cartItems?.map((item: any) => ({
+                    name: item?.name ?? '',
+                    quantity: item?.quantity ?? 0,
+                    price: item?.price ?? 0
+                })) || []
+            })
 
-            if (result && result.data && result.data.qrDataURL) {
-                setQrDataUrl(result.data.qrDataURL);
-                setPaymentCode(result.data.qrCode || '');
+            if (result && result.data) {
+                const { bin, accountNumber, description, amount, qrCode, paymentLinkId, checkoutUrl } = result.data;
+                console.log(paymentLinkId);
+                const qrImageUrl = `https://api.vietqr.io/image/${bin}-${accountNumber}-vietqr_pro.jpg?addInfo=${encodeURIComponent(description)}&amount=${amount}`;
+                setQrDataUrl(qrImageUrl);
+                setPaymentLinkId(paymentLinkId);
+                setPaymentUrl(checkoutUrl || '');
+                setPaymentCode(qrCode || '');
             } else {
                 Alert.alert('Lỗi', 'Không tạo được mã QR');
             }
+            console.log('QR Code Result:', result);
         } catch (error) {
             console.error('QR Generation Error:', error);
             Alert.alert('Lỗi', 'Không tạo được mã QR');
@@ -53,34 +84,91 @@ export default function QRPaymentScreen() {
     }, [amount]);
 
     // Open MoMo app with QR code
-    const openMoMoApp = async () => {
+    // const openMoMoApp = async () => {
+    //     try {
+    //         // Try to open MoMo app directly
+    //         const momoUrl = `momo://app`;
+    //         const canOpen = await Linking.canOpenURL(momoUrl);
+
+    //         if (canOpen) {
+    //             await Linking.openURL(momoUrl);
+    //         } else {
+    //             // If MoMo app is not installed, open app store
+    //             const storeUrl = Platform.OS === 'ios'
+    //                 ? 'https://apps.apple.com/vn/app/momo-ví-điện-tử-số-1-việt-nam/id918751511'
+    //                 : 'https://play.google.com/store/apps/details?id=com.mservice.momotransfer';
+
+    //             Alert.alert(
+    //                 'Cần có ứng dụng MoMo',
+    //                 'Ứng dụng MoMo chưa được cài đặt. Bạn có muốn cài đặt không?',
+    //                 [
+    //                     { text: 'Hủy', style: 'cancel' },
+    //                     { text: 'Cài đặt', onPress: () => Linking.openURL(storeUrl) }
+    //                 ]
+    //             );
+    //         }
+    //     } catch (error) {
+    //         console.error('Error opening MoMo:', error);
+    //         Alert.alert('Lỗi', 'Không thể mở ứng dụng MoMo');
+    //     }
+    // };
+
+    const handleCheckPayment = async () => {
+        if (!paymentLinkId) {
+            toast.error("Lỗi", "Không có mã thanh toán để kiểm tra");
+            return;
+        }
         try {
-            // Try to open MoMo app directly
-            const momoUrl = `momo://app`;
-            const canOpen = await Linking.canOpenURL(momoUrl);
+            setIsChecking(true);
 
-            if (canOpen) {
-                await Linking.openURL(momoUrl);
-            } else {
-                // If MoMo app is not installed, open app store
-                const storeUrl = Platform.OS === 'ios'
-                    ? 'https://apps.apple.com/vn/app/momo-ví-điện-tử-số-1-việt-nam/id918751511'
-                    : 'https://play.google.com/store/apps/details?id=com.mservice.momotransfer';
+            const result = await checkPayment(paymentLinkId);
 
-                Alert.alert(
-                    'Cần có ứng dụng MoMo',
-                    'Ứng dụng MoMo chưa được cài đặt. Bạn có muốn cài đặt không?',
-                    [
-                        { text: 'Hủy', style: 'cancel' },
-                        { text: 'Cài đặt', onPress: () => Linking.openURL(storeUrl) }
-                    ]
-                );
+            if (result && result.data) {
+                const { status, transactions } = result.data;
+                if (!status) {
+                    toast.success("Thông báo", "Chưa có thông tin thanh toán, vui lòng thử lại sau vài giây.");
+                    return;
+                }
+                else {
+                    if (status === "PENDING") {
+                        toast.success("Thông báo", "Thanh toán chưa được xử lý, hãy tiến hành thanh toán.");
+                        return;
+                    }
+                    if (status === "PAID") {
+                        setPaymentStatus("paid");
+                        const booking = await createBookingsFromCart(JSON.parse(cartSF as string));
+                        if (booking) {
+                            await savePaymentHistory({
+                                userId: info?.id ?? "",
+                                bookingId: booking.bookingId,
+                                amount: Number(amount ?? 0),
+                                method: 'qr',
+                                responseCode: result.code ?? "99",
+                                paymentUrl: paymentUrl,
+                                raw: transactions && transactions[0] ? transactions[0] : {},
+                                status: result.code === '00' ? "paid" : "failed",
+                            });
+                            toast.success(t("app.success"), t("app.thanks"));
+                            await checkAndSendNotify(JSON.parse(cartSF as string)?.restaurantId, "Bạn có đơn hàng mới", "Vui lòng kiểm tra đơn hàng của bạn");
+                        }
+                    }
+                    else {
+                        setPaymentStatus("failed");
+                        toast.success("Thông báo", "Thanh toán chưa thành công, vui lòng thử lại sau");
+                    }
+                    setQrDataUrl(null);
+                    setPaymentCode('');
+                    setPaymentLinkId(null);
+                    router.replace("/(home)");
+                }
             }
         } catch (error) {
-            console.error('Error opening MoMo:', error);
-            Alert.alert('Lỗi', 'Không thể mở ứng dụng MoMo');
+            console.error('Checking Payment Error:', error);
+            Alert.alert('Lỗi', 'Không thể kiểm tra thanh toán');
+        } finally {
+            setIsChecking(false);
         }
-    };
+    }
 
     // Open banking app (generic)
     const openBankingApp = () => {
@@ -189,10 +277,17 @@ export default function QRPaymentScreen() {
 
             {/* Action Buttons */}
             <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.momoButton} onPress={openMoMoApp}>
+                <TouchableOpacity
+                    style={[styles.momoButton, isChecking && { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}
+                    onPress={handleCheckPayment}
+                    disabled={isChecking}
+                >
                     <View style={styles.buttonContent}>
-                        <Ionicons name="wallet" size={24} color="#fff" />
-                        <Text style={styles.buttonText}>Mở MoMo</Text>
+                        {isChecking ?
+                            <ActivityIndicator size={24} color="white" />
+                            :
+                            <Ionicons name="checkmark-done-circle" size={24} color="#fff" />}
+                        <Text style={styles.buttonText}>Xác nhận đã thanh toán</Text>
                     </View>
                 </TouchableOpacity>
 
@@ -340,12 +435,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#A50064',
         borderRadius: 12,
         padding: 16,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        marginBottom: 12
     },
     bankButton: {
         backgroundColor: '#0066CC',

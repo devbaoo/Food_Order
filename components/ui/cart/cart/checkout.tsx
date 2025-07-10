@@ -11,9 +11,10 @@ import moment from 'moment';
 import { toast } from '@/utils/toast';
 import { formatCurrency } from '@/utils/currency';
 import { paymentMethods } from '@/data/payment';
+import { checkAndSendNotify } from '@/api/modules/notification';
 
 const CheckoutScreen = ({ ...props }) => {
-    const { pagerRef, cart, currentStep, setCurrentStep, info, t } = props;
+    const { pagerRef, cart, currentStep, setCurrentStep, info, t, token } = props;
     const [selectedPayment, setSelectedPayment] = useState('cash');
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
@@ -167,6 +168,8 @@ const CheckoutScreen = ({ ...props }) => {
                     if (selectedDiscount) {
                         await createBookingVoucher(booking.bookingId, selectedDiscount.id);
                     }
+
+                    await checkAndSendNotify(cart?.restaurantId, "Bạn có đơn hàng mới", "Vui lòng kiểm tra đơn hàng của bạn");
                     toast.success(t("app.success"), t("app.thanks"));
                 }
                 setTimeout(() => {

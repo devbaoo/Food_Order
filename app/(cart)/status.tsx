@@ -6,9 +6,10 @@ import Toast from 'react-native-toast-message';
 import { usePaymentStore } from '@/stores/paymentStore';
 import { savePaymentHistory } from '@/api/modules/payment';
 import { useAuth } from '@/providers/AuthenticatedProvider';
-import { toast } from '@/utils';
 import { useTranslation } from 'react-i18next';
 import { createBookingsFromCart } from '@/api/modules/booking';
+import { toast } from '@/utils/toast';
+import { checkAndSendNotify } from '@/api/modules/notification';
 
 const PaymentWebView = () => {
   const webViewRef = useRef(null);
@@ -63,6 +64,7 @@ const PaymentWebView = () => {
           status: responseCode === '00' ? "paid" : "failed",
         });
         toast.success(t("app.success"), t("app.thanks"));
+        await checkAndSendNotify(cart?.restaurantId, "Bạn có đơn hàng mới", "Vui lòng kiểm tra đơn hàng của bạn");
         router.replace("/(home)");
       }
     }

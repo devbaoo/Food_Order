@@ -43,7 +43,7 @@ const FavoritesScreen = () => {
     };
 
     const handleNotificationPress = () => {
-        console.log('Notification pressed');
+        router.push('/(notification)');
     };
 
     const handleFindStoresPress = () => {

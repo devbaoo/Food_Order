@@ -1,4 +1,5 @@
 import { getAllBookingsForShipper, updateBookingStatus } from '@/api/modules/booking';
+import { checkAndSendNotify } from '@/api/modules/notification';
 import BackgroundLoading2 from '@/components/loading/background_2';
 import { auth } from '@/lib/firebase-config';
 import { Booking } from '@/types';
@@ -29,7 +30,7 @@ export default () => {
         onLoad();
     }, []);
 
-    const updateOrderStatus = async (orderId: string, newStatus: 'Pending' | 'Processing' | 'Shipping' | 'Delivered' | 'Cancelled') => {
+    const updateOrderStatus = async (orderId: string, restaurantId: string, newStatus: 'Pending' | 'Processing' | 'Shipping' | 'Delivered' | 'Cancelled') => {
         Alert.alert(
             t("app.confirm_action"),
             `Bạn có muốn ${newStatus === "Shipping" ? "nhận đơn hàng này" : "xác nhận đã giao hàng"}?`,
@@ -44,6 +45,12 @@ export default () => {
                         try {
                             setEditting(true);
                             await updateBookingStatus(orderId, newStatus);
+
+                            if (newStatus === "Shipping") {
+                                await checkAndSendNotify(restaurantId, "Shipper đã nhận đơn", "Bạn có thể theo dõi tiến trình.");
+                            } else if (newStatus === "Delivered") {
+                                await checkAndSendNotify(restaurantId, "Đơn được giao thành công", "Tiền sẽ được gửi vào tài khoản của bạn.");
+                            }
 
                             Alert.alert(
                                 t("app.success"),
@@ -144,7 +151,7 @@ export default () => {
                         opacity: item.status !== 'Processing' && item.status !== 'Shipping' ? 0.6 : 1,
                     },
                 ]}
-                onPress={async () => await updateOrderStatus(item.id, item.status === "Processing" ? "Shipping" : "Delivered")}
+                onPress={async () => await updateOrderStatus(item.id, item.restaurantId, item.status === "Processing" ? "Shipping" : "Delivered")}
                 disabled={item.status !== 'Processing' && item.status !== 'Shipping'}
             >
                 {editting && <ActivityIndicator size={16} color="white" />}
