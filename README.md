@@ -35,6 +35,26 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## Set up environment using .env file
+```bash
+EXPO_PUBLIC_TOGETHER_BASE_URL=
+EXPO_PUBLIC_TOGETHER_API_KEY=
+EXPO_PUBLIC_TMNCODE=
+EXPO_PUBLIC_HASHSECRET=
+EXPO_PUBLIC_VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+EXPO_PUBLIC_VNPAY_RETURN_URL=http://localhost:8888/order/vnpay_return
+EXPO_PUBLIC_CLOUDINARY_NAME=
+EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=food_order
+EXPO_PUBLIC_ACCOUNT_NUMBER=
+EXPO_PUBLIC_ACCOUNT_NAME=
+EXPO_PUBLIC_BANK_BIN=
+EXPO_PUBLIC_CLIENT_ID=
+EXPO_PUBLIC_API_KEY=
+EXPO_PUBLIC_CLIENT_ID_PAYOS=
+EXPO_PUBLIC_API_KEY_PAYOS=
+EXPO_PUBLIC_CHECKSUM_KEY_PAYOS=
+```
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:
